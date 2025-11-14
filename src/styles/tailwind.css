@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .card { @apply border border-emerald/20 rounded-2xl p-4 bg-black/30 shadow-emerald; }
+  .btn { @apply border border-emerald/40 text-emerald-100 px-3 py-2 rounded-xl transition hover:border-emerald hover:text-white; }
+  .pill { @apply text-xs px-2 py-0.5 rounded-full border border-emerald/30; }
+  .glass { @apply bg-black/40 backdrop-blur-md; }
+}
