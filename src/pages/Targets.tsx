@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import {
   Sparkles,
   Star,
@@ -14,6 +20,8 @@ import {
   Calendar,
   Globe,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface Company {
@@ -34,9 +42,17 @@ interface Company {
 
 export default function Targets() {
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+
+  // Separate input value from search value
+  const [inputValue, setInputValue] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Filter states
   const [industryFilter, setIndustryFilter] = useState<string>("");
@@ -46,147 +62,170 @@ export default function Targets() {
   const [foundedYearFilter, setFoundedYearFilter] = useState<string>("");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Refs
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Debounce the input value
   useEffect(() => {
-    fetchCompaniesFromDatabase();
-  }, []);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
 
-  // Filtered companies based on active filters
-  const filteredCompanies = useMemo(() => {
-    return companies.filter((company) => {
-      // Search query filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesSearch =
-          company.name?.toLowerCase().includes(query) ||
-          company.domain?.toLowerCase().includes(query) ||
-          company.industry?.toLowerCase().includes(query) ||
-          company.description?.toLowerCase().includes(query);
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearch(inputValue);
+      setCurrentPage(1); // Reset to first page on search
+    }, 500);
 
-        if (!matchesSearch) return false;
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
+    };
+  }, [inputValue]);
 
-      // Industry filter
-      if (industryFilter && company.industry !== industryFilter) {
-        return false;
-      }
+  // Memoize filter options
+  const filterOptions = useMemo(() => {
+    const industries = new Set<string>();
+    const countries = new Set<string>();
+    const cities = new Set<string>();
 
-      // Country filter
-      if (countryFilter && company.country !== countryFilter) {
-        return false;
-      }
-
-      // City filter
-      if (cityFilter && company.city !== cityFilter) {
-        return false;
-      }
-
-      // Founded year filter
-      if (foundedYearFilter && company.founded_year) {
-        const year = company.founded_year;
-        if (foundedYearFilter === "2020+") {
-          if (year < 2020) return false;
-        } else if (foundedYearFilter === "2015-2019") {
-          if (year < 2015 || year > 2019) return false;
-        } else if (foundedYearFilter === "2010-2014") {
-          if (year < 2010 || year > 2014) return false;
-        } else if (foundedYearFilter === "2000-2009") {
-          if (year < 2000 || year > 2009) return false;
-        } else if (foundedYearFilter === "before-2000") {
-          if (year >= 2000) return false;
-        }
-      }
-
-      // Employee count filter
-      if (employeeCountFilter && company.employees) {
-        const empCount = parseInt(company.employees.replace(/[^0-9]/g, ""));
-        const [min, max] = employeeCountFilter
-          .split("-")
-          .map((n) => parseInt(n.replace("+", "")));
-
-        if (employeeCountFilter.includes("+")) {
-          if (empCount < min) return false;
-        } else {
-          if (empCount < min || empCount > max) return false;
-        }
-      }
-
-      return true;
+    companies.forEach((c) => {
+      if (c.industry) industries.add(c.industry);
+      if (c.country) countries.add(c.country);
+      if (c.city) cities.add(c.city);
     });
-  }, [
-    companies,
-    searchQuery,
-    industryFilter,
-    employeeCountFilter,
-    countryFilter,
-    cityFilter,
-    foundedYearFilter,
-  ]);
 
-  // Get unique values for filters
-  const industries = useMemo(
-    () =>
-      Array.from(
-        new Set(companies.map((c) => c.industry).filter(Boolean))
-      ).sort(),
-    [companies]
-  );
+    return {
+      industries: Array.from(industries).sort(),
+      countries: Array.from(countries).sort(),
+      cities: Array.from(cities).sort(),
+    };
+  }, [companies]);
 
-  const countries = useMemo(
-    () =>
-      Array.from(
-        new Set(companies.map((c) => c.country).filter(Boolean))
-      ).sort(),
-    [companies]
-  );
+  // Optimized client-side filtering
+  const filteredCompanies = useMemo(() => {
+    let filtered = companies;
 
-  const cities = useMemo(
-    () =>
-      Array.from(new Set(companies.map((c) => c.city).filter(Boolean))).sort(),
-    [companies]
-  );
+    if (cityFilter || foundedYearFilter || employeeCountFilter) {
+      filtered = companies.filter((company) => {
+        if (cityFilter && company.city !== cityFilter) return false;
 
-  const activeFilterCount = [
-    industryFilter,
-    employeeCountFilter,
-    countryFilter,
-    cityFilter,
-    foundedYearFilter,
-  ].filter(Boolean).length;
+        if (foundedYearFilter && company.founded_year) {
+          const year = company.founded_year;
+          switch (foundedYearFilter) {
+            case "2020+":
+              if (year < 2020) return false;
+              break;
+            case "2015-2019":
+              if (year < 2015 || year > 2019) return false;
+              break;
+            case "2010-2014":
+              if (year < 2010 || year > 2014) return false;
+              break;
+            case "2000-2009":
+              if (year < 2000 || year > 2009) return false;
+              break;
+            case "before-2000":
+              if (year >= 2000) return false;
+              break;
+          }
+        }
 
-  const clearFilters = () => {
-    setIndustryFilter("");
-    setEmployeeCountFilter("");
-    setCountryFilter("");
-    setCityFilter("");
-    setFoundedYearFilter("");
-    setSearchQuery("");
+        if (employeeCountFilter && company.employees) {
+          const empCount = parseInt(company.employees.replace(/[^0-9]/g, ""));
+          if (isNaN(empCount)) return true;
+
+          if (employeeCountFilter.includes("+")) {
+            const min = parseInt(employeeCountFilter.replace("+", ""));
+            if (empCount < min) return false;
+          } else {
+            const [min, max] = employeeCountFilter.split("-").map(Number);
+            if (empCount < min || empCount > max) return false;
+          }
+        }
+
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [companies, cityFilter, foundedYearFilter, employeeCountFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredCompanies.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCompanies = filteredCompanies.slice(startIndex, endIndex);
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 7;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push("...");
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push("...");
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push("...");
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push("...");
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
   };
 
-  const fetchCompaniesFromDatabase = async () => {
+  // Fetch function
+  const fetchCompanies = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     setLoading(true);
     setError(null);
+    abortControllerRef.current = new AbortController();
 
     try {
-      const functionUrl = `https://zhmalcapsmcvvhyrcicm.supabase.co/functions/v1/companies`;
+      const params = new URLSearchParams({
+        limit: "1000",
+        offset: "0",
+      });
+
+      if (countryFilter) params.append("country", countryFilter);
+      if (industryFilter) params.append("industry", industryFilter);
+      if (debouncedSearch.trim())
+        params.append("search", debouncedSearch.trim());
+
+      const functionUrl = `https://zhmalcapsmcvvhyrcicm.supabase.co/functions/v1/companies?${params.toString()}`;
 
       const response = await fetch(functionUrl, {
-        method: "POST",
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          limit: 1000,
-          offset: 0,
-        }),
+        signal: abortControllerRef.current.signal,
       });
 
-      const responseData = await response.json();
-
       if (!response.ok) {
+        const responseData = await response.json();
         throw new Error(responseData.error || "Failed to fetch companies");
       }
 
-      // Map the API response correctly
+      const responseData = await response.json();
+
       const mappedCompanies = (responseData.data || []).map((company: any) => ({
         id: company.id,
         name: company.display_name || company.legal_name || "Unnamed Company",
@@ -203,11 +242,14 @@ export default function Targets() {
       }));
 
       setCompanies(mappedCompanies);
+      setTotalCount(responseData.count || mappedCompanies.length);
+      setCurrentPage(1); // Reset to first page
 
       if (mappedCompanies.length === 0) {
-        setError("No companies found in database.");
+        setError("No companies found matching your criteria.");
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === "AbortError") return;
       console.error("Database fetch error:", err);
       setError(
         err instanceof Error
@@ -217,15 +259,73 @@ export default function Targets() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [countryFilter, industryFilter, debouncedSearch]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      // Search is handled by filtered companies in real-time
-    }
-  };
+  // Trigger fetch when debounced search or filters change
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
 
-  if (loading) {
+  // Reset to page 1 when client-side filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [cityFilter, foundedYearFilter, employeeCountFilter]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const activeFilterCount = useMemo(
+    () =>
+      [
+        industryFilter,
+        employeeCountFilter,
+        countryFilter,
+        cityFilter,
+        foundedYearFilter,
+      ].filter(Boolean).length,
+    [
+      industryFilter,
+      employeeCountFilter,
+      countryFilter,
+      cityFilter,
+      foundedYearFilter,
+    ]
+  );
+
+  const clearFilters = useCallback(() => {
+    setIndustryFilter("");
+    setEmployeeCountFilter("");
+    setCountryFilter("");
+    setCityFilter("");
+    setFoundedYearFilter("");
+    setInputValue("");
+    setDebouncedSearch("");
+    setCurrentPage(1);
+  }, []);
+
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        if (searchTimeoutRef.current) {
+          clearTimeout(searchTimeoutRef.current);
+        }
+        setDebouncedSearch(inputValue);
+        setCurrentPage(1);
+      }
+    },
+    [inputValue]
+  );
+
+  if (loading && companies.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <Loader2 className="animate-spin text-blue-500 mb-4" size={48} />
@@ -247,7 +347,7 @@ export default function Targets() {
                 Total Companies
               </p>
               <p className="text-2xl font-bold text-white">
-                {companies.length}
+                {totalCount.toLocaleString()}
               </p>
             </div>
             <Building2 className="text-blue-400" size={32} />
@@ -257,10 +357,10 @@ export default function Targets() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-400">
-                Filtered Results
+                Showing Results
               </p>
               <p className="text-2xl font-bold text-white">
-                {filteredCompanies.length}
+                {filteredCompanies.length.toLocaleString()}
               </p>
             </div>
             <Filter className="text-emerald-400" size={32} />
@@ -271,7 +371,7 @@ export default function Targets() {
             <div>
               <p className="text-sm font-medium text-slate-400">Industries</p>
               <p className="text-2xl font-bold text-white">
-                {industries.length}
+                {filterOptions.industries.length}
               </p>
             </div>
             <Briefcase className="text-purple-400" size={32} />
@@ -282,7 +382,7 @@ export default function Targets() {
             <div>
               <p className="text-sm font-medium text-slate-400">Countries</p>
               <p className="text-2xl font-bold text-white">
-                {countries.length}
+                {filterOptions.countries.length}
               </p>
             </div>
             <MapPin className="text-orange-400" size={32} />
@@ -298,12 +398,15 @@ export default function Targets() {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input
               type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Search by company name, domain, or industry..."
               className="w-full pl-12 pr-4 py-4 bg-slate-700 border-2 border-slate-600 rounded-xl text-white placeholder-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all"
             />
+            {loading && (
+              <Loader2 className="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-400 w-5 h-5 animate-spin" />
+            )}
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -360,7 +463,7 @@ export default function Targets() {
                   onChange={(e) => setIndustryFilter(e.target.value)}
                 >
                   <option value="">All Industries</option>
-                  {industries.map((industry) => (
+                  {filterOptions.industries.map((industry) => (
                     <option key={industry} value={industry}>
                       {industry}
                     </option>
@@ -381,7 +484,7 @@ export default function Targets() {
                   onChange={(e) => setCountryFilter(e.target.value)}
                 >
                   <option value="">All Countries</option>
-                  {countries.map((country) => (
+                  {filterOptions.countries.map((country) => (
                     <option key={country} value={country}>
                       {country}
                     </option>
@@ -402,7 +505,7 @@ export default function Targets() {
                   onChange={(e) => setCityFilter(e.target.value)}
                 >
                   <option value="">All Cities</option>
-                  {cities.map((city) => (
+                  {filterOptions.cities.map((city) => (
                     <option key={city} value={city}>
                       {city}
                     </option>
@@ -520,9 +623,54 @@ export default function Targets() {
         </div>
       )}
 
+      {/* Results Info Bar */}
+      {filteredCompanies.length > 0 && (
+        <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-4 border border-slate-700 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-slate-300 font-medium">
+              Showing{" "}
+              <span className="font-bold text-blue-400">
+                {startIndex + 1}-{Math.min(endIndex, filteredCompanies.length)}
+              </span>{" "}
+              of{" "}
+              <span className="font-bold text-purple-400">
+                {filteredCompanies.length.toLocaleString()}
+              </span>{" "}
+              companies
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-slate-400">Per page:</label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-3 py-1 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:border-blue-500 focus:outline-none"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+        </div>
+      )}
+
       {/* Results */}
       <div className="space-y-3">
-        {filteredCompanies.map((company) => (
+        {loading && companies.length > 0 && (
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shadow-2xl p-6 border border-slate-700">
+            <div className="flex items-center justify-center gap-3 py-8">
+              <Loader2 className="animate-spin text-blue-400" size={32} />
+              <span className="text-lg font-medium text-slate-300">
+                Updating results...
+              </span>
+            </div>
+          </div>
+        )}
+        {paginatedCompanies.map((company) => (
           <div
             key={company.id}
             className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shadow-2xl hover:shadow-blue-500/10 transition-all p-6 border-l-4 border-blue-500 group hover:border-blue-400"
@@ -639,20 +787,59 @@ export default function Targets() {
         )}
       </div>
 
-      {/* Results Footer */}
-      {filteredCompanies.length > 0 && (
-        <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-4 border-2 border-slate-700">
-          <p className="text-sm text-slate-300 font-medium">
-            Showing{" "}
-            <span className="font-bold text-blue-400">
-              {filteredCompanies.length}
-            </span>{" "}
-            of{" "}
-            <span className="font-bold text-purple-400">
-              {companies.length}
-            </span>{" "}
-            companies
-          </p>
+      {/* Pagination */}
+      {filteredCompanies.length > 0 && totalPages > 1 && (
+        <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-6 border border-slate-700">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                currentPage === 1
+                  ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-500"
+              }`}
+            >
+              <ChevronLeft size={20} />
+              Previous
+            </button>
+
+            <div className="flex items-center gap-2">
+              {getPageNumbers().map((page, index) => (
+                <React.Fragment key={index}>
+                  {page === "..." ? (
+                    <span className="px-3 py-2 text-slate-400">...</span>
+                  ) : (
+                    <button
+                      onClick={() => setCurrentPage(page as number)}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                        currentPage === page
+                          ? "bg-blue-600 text-white"
+                          : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+              }
+              disabled={currentPage === totalPages}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                currentPage === totalPages
+                  ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-500"
+              }`}
+            >
+              Next
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
       )}
     </div>

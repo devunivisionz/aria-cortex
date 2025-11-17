@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #0a0a0a;
+    --card: #111213;
+    --muted: #b7b7b7;
+    --emerald-core: #10b981;
+  }
+
+  body {
+    @apply bg-[var(--bg)] text-white min-h-screen;
+  }
+
+  .gradient-emerald {
+    @apply min-h-screen w-full bg-[var(--bg)];
+    background: radial-gradient(
+        800px circle at 20% -20%,
+        rgba(4, 107, 78, 0.35),
+        transparent 60%
+      ),
+      radial-gradient(
+        800px circle at 110% 20%,
+        rgba(4, 107, 78, 0.2),
+        transparent 50%
+      ),
+      var(--bg);
+  }
+
+  .card {
+    @apply bg-[var(--card)] border border-white/10 rounded-2xl p-6;
+  }
+
+  .text-muted {
+    @apply text-[var(--muted)];
+  }
+
+  .bg-emeraldCore {
+    @apply bg-[var(--emerald-core)];
+  }
+
+  .shadow-soft {
+    box-shadow: 0 4px 20px -5px rgba(16, 185, 129, 0.3);
+  }
+}
+
+@layer components {
+  .btn {
+    @apply border border-emerald/40 text-emerald-100 px-4 py-2.5 rounded-xl transition-all duration-200 
+           hover:border-emerald-500 hover:text-white hover:shadow-soft
+           focus:outline-none focus:ring-2 focus:ring-emerald-500/50;
+  }
+
+  .pill {
+    @apply text-xs px-3 py-1 rounded-full border border-emerald/30 bg-emerald-900/20 text-emerald-300;
+  }
+
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/5;
+  }
+}

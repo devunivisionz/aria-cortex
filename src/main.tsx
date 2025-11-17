@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./styles/tailwind.css";
 import ClayAPITest from "./pages/Test";
+import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
