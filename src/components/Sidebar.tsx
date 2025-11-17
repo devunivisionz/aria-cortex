@@ -1,5 +1,5 @@
-import React from 'react'
-import { NavLink } from 'react-router-dom'
+import React from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export default function Sidebar() {
   const routes = [
@@ -10,11 +10,14 @@ export default function Sidebar() {
     { path: "/reports", label: "Reports", end: false },
     { path: "/settings", label: "Settings", end: false },
     { path: "/dna", label: "DNA Wizard", end: false },
-  ]
-
+  ];
+  const navigate = useNavigate();
   return (
     <aside className="p-6 sticky top-0 h-screen border-r border-white/10 glass">
-      <div className="font-semibold text-lg mb-6">
+      <div
+        onClick={() => navigate("/home")}
+        className="font-semibold text-lg mb-6"
+      >
         AR<span className="text-emerald-400">IA</span> Cortex
       </div>
       <nav className="grid gap-2 text-sm">
@@ -37,5 +40,5 @@ export default function Sidebar() {
         © Aria Ventures — Origination Engine
       </div>
     </aside>
-  )
+  );
 }
