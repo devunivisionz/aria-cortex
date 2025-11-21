@@ -1,24 +1,136 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Input from "../../../components/AuthenticationComponents/InputFields";
 import Button from "../../../components/Button";
 import { Link } from "react-router-dom";
+// import { authService } from "../../../lib/supabaseClient";
 
 export default function SignupPage({
   onSwitchToLogin,
 }: {
   onSwitchToLogin: () => void;
 }) {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
-  const handleSubmit = () => {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
+  const handleSubmit = async () => {
+    // Reset messages
+    setError("");
+    setSuccess("");
+
+    // Validation
+    if (!fullName.trim()) {
+      setError("Please enter your full name");
       return;
     }
-    alert(`Sign up attempted with email: ${email}`);
+
+    if (!email.trim()) {
+      setError("Please enter your email");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match!");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Call Supabase Edge Function for registration
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            password: password,
+            fullName: fullName.trim(),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || data.message || "Failed to create account"
+        );
+      }
+
+      // Success
+      if (data.user) {
+        setSuccess(
+          data.message ||
+            "Account created successfully! Please check your email to verify your account."
+        );
+
+        // Clear form fields
+        setFullName("");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+
+        // Redirect to login after a delay
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      }
+    } catch (err: any) {
+      console.error("Signup error:", err);
+
+      // Handle specific error messages
+      if (
+        err.message.includes("already registered") ||
+        err.message.includes("User already exists") ||
+        err.message.includes("already been registered")
+      ) {
+        setError("This email is already registered. Please sign in instead.");
+      } else if (
+        err.message.includes("Invalid email") ||
+        err.message.includes("valid email")
+      ) {
+        setError("Please enter a valid email address.");
+      } else if (
+        err.message.includes("network") ||
+        err.message.includes("Failed to fetch")
+      ) {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError(err.message || "Failed to create account. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      // await authService.signInWithGoogle();
+      // User will be redirected to Google OAuth
+    } catch (err: any) {
+      console.error("Google signup error:", err);
+      setError("Failed to sign up with Google. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -128,6 +240,40 @@ export default function SignupPage({
           Start your journey with Aria Cortex
         </p>
 
+        {/* Error Message */}
+        {error && (
+          <div
+            style={{
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              padding: "0.75rem 1rem",
+              marginBottom: "1.5rem",
+              color: "#f87171",
+              fontSize: "0.875rem",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {/* Success Message */}
+        {success && (
+          <div
+            style={{
+              backgroundColor: "rgba(16, 185, 129, 0.1)",
+              border: "1px solid rgba(16, 185, 129, 0.3)",
+              borderRadius: "8px",
+              padding: "0.75rem 1rem",
+              marginBottom: "1.5rem",
+              color: "#10b981",
+              fontSize: "0.875rem",
+            }}
+          >
+            {success}
+          </div>
+        )}
+
         {/* Form Fields */}
         <div>
           <Input
@@ -137,6 +283,7 @@ export default function SignupPage({
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             required
+            disabled={isLoading}
           />
 
           <Input
@@ -146,6 +293,7 @@ export default function SignupPage({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={isLoading}
           />
 
           <Input
@@ -155,6 +303,7 @@ export default function SignupPage({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isLoading}
           />
 
           <Input
@@ -164,6 +313,7 @@ export default function SignupPage({
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
+            disabled={isLoading}
           />
 
           <label
@@ -180,6 +330,7 @@ export default function SignupPage({
             <input
               type="checkbox"
               required
+              disabled={isLoading}
               style={{
                 width: "16px",
                 height: "16px",
@@ -214,7 +365,9 @@ export default function SignupPage({
             </span>
           </label>
 
-          <Button onClick={handleSubmit}>Create account</Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? "Creating account..." : "Create account"}
+          </Button>
         </div>
 
         {/* Divider */}
@@ -251,7 +404,11 @@ export default function SignupPage({
         </div>
 
         {/* Social Login */}
-        <Button variant="secondary">
+        <Button
+          variant="secondary"
+          onClick={handleGoogleSignup}
+          disabled={isLoading}
+        >
           <span
             style={{
               display: "flex",
@@ -294,17 +451,17 @@ export default function SignupPage({
           Already have an account?{" "}
           <Link
             to="/login"
-            // onClick={(e) => {
-            //   e.preventDefault();
-            //   onSwitchToLogin();
-            // }}
             style={{
               color: "#10b981",
               textDecoration: "none",
               fontWeight: 600,
             }}
-            onMouseEnter={(e) => (e.target.style.textDecoration = "underline")}
-            onMouseLeave={(e) => (e.target.style.textDecoration = "none")}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.textDecoration = "underline")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.textDecoration = "none")
+            }
           >
             Sign in
           </Link>

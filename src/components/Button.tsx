@@ -3,12 +3,14 @@ export default function Button({
   onClick,
   variant = "primary",
   fullWidth = true,
+  disabled = false,
   style = {},
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   variant?: "primary" | "secondary";
   fullWidth?: boolean;
+  disabled?: boolean;
   style?: React.CSSProperties;
 }) {
   const baseStyle = {
@@ -38,6 +40,7 @@ export default function Button({
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       style={{ ...baseStyle, ...variantStyles[variant], ...style }}
       onMouseEnter={(e) => {
         if (variant === "primary") {

@@ -1,332 +1,405 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 /**
- * ARIA CORTEX — FULL HOMEPAGE
- * Enterprise-grade layout, inspired by Grata / PitchBook / Gain.pro
- * - Tailwind CSS
- * - Black + Emerald aesthetic
+ * Aria Cortex – Homepage (Killer-level PMF clarity)
+ * - Hero ICP: Mid-market PE / growth funds (then corporate M&A, then brands/distributors, then advisors).
+ * - Seriousness filter: funds €50M+ AUM; corporates/brands €30M+ revenue.
+ * - Geography: Europe, Middle East, USA, global markets.
+ * - Product-first: platform as origination engine, services as performance-aligned add-on.
  */
 
 export default function Home() {
+  const navigate = useNavigate();
   return (
-    <div className="bg-black text-white font-inter min-h-screen flex flex-col">
-      <Header />
+    <div className="bg-black text-white font-inter">
+      {/* NAVBAR */}
+      <header className="border-b border-white/10 bg-black/80 backdrop-blur-lg sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-sm bg-emerald-500" />
+            <span className="font-semibold tracking-wide">Aria Cortex</span>
+          </div>
 
-      <main className="flex-1">
-        <HeroSection />
-        <TrustStrip />
-        <ProductStrip />
-        <InvestmentDNA />
-        <WorkflowSection />
-        <SolutionsSection />
-        <GlobalCoverage />
-        <ComparisonPreview />
-        <TestimonialsSection />
-        <PricingTeaser />
-        <FinalCTA />
-      </main>
+          <nav className="hidden md:flex gap-8 text-sm">
+            <a href="#who" className="hover:text-emerald-400">
+              Who it’s for
+            </a>
+            <a href="#pain" className="hover:text-emerald-400">
+              Why change
+            </a>
+            <a href="#how" className="hover:text-emerald-400">
+              How it works
+            </a>
+            <a href="#dna" className="hover:text-emerald-400">
+              Investment DNA
+            </a>
+            <a href="#proof" className="hover:text-emerald-400">
+              Proof
+            </a>
+            <a href="#pricing" className="hover:text-emerald-400">
+              Pricing
+            </a>
+          </nav>
+          <button
+            onClick={() => navigate("/login")}
+            className="hidden md:inline-flex px-3 py-1.5 rounded-full text-xs border border-white/20 text-white/80 hover:border-emerald-400 hover:text-white transition"
+          >
+            Log in
+          </button>
+          <button className="px-4 py-2 rounded-md bg-emerald-500 hover:bg-emerald-600 text-sm font-medium">
+            Request a Demo
+          </button>
+        </div>
+      </header>
 
-      <Footer />
+      {/* HERO */}
+      <section className="pt-24 md:pt-32 pb-20 max-w-7xl mx-auto px-6 text-center md:text-left">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              AI Origination Engine
+              <span className="block text-emerald-400 mt-2">
+                for mid-market funds & acquirers
+              </span>
+            </h1>
+
+            <p className="mt-6 text-base md:text-lg text-white/70 max-w-xl">
+              Aria Cortex replaces manual, noisy deal sourcing with an AI engine
+              that scores every company against your{" "}
+              <span className="font-medium text-white">Investment DNA</span> —
+              so your team works a disciplined pipeline of targets you might
+              actually close, not just whatever happens to reach your inbox.
+            </p>
+
+            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+              <button className="px-6 py-3 rounded-md bg-emerald-500 hover:bg-emerald-600 text-base font-medium">
+                Talk to Sales
+              </button>
+              <button className="px-6 py-3 rounded-md border border-white/20 hover:border-white/40 text-base">
+                Watch Product Walkthrough
+              </button>
+            </div>
+
+            <p className="mt-4 text-xs text-white/45 max-w-xl">
+              Built for mid-market PE & growth funds first, then corporate
+              M&amp;A teams and brands/distributors expanding across{" "}
+              <span className="text-white font-medium">
+                Europe, the Middle East, the USA and global markets.
+              </span>
+            </p>
+            <p className="mt-1 text-xs text-white/45">
+              We typically work with funds managing{" "}
+              <span className="font-medium text-white">€50M+ AUM</span> and
+              corporates/brands with{" "}
+              <span className="font-medium text-white">
+                €30M+ in annual revenue.
+              </span>
+            </p>
+          </div>
+
+          {/* Simple “engine” visual */}
+          <div className="md:justify-self-end">
+            <div className="bg-neutral-900 border border-white/10 rounded-2xl p-6 md:p-8 shadow-xl">
+              <p className="text-xs uppercase tracking-wide text-white/40">
+                Aria Cortex · Origination Flow
+              </p>
+              <div className="mt-4 space-y-4 text-sm">
+                <EngineRow
+                  label="Inputs"
+                  items={[
+                    "Mandates & investment thesis",
+                    "Regions, ticket sizes, ownership constraints",
+                    "Signals from Clay / Apollo / web & internal notes",
+                  ]}
+                />
+                <EngineRow
+                  label="Engine"
+                  items={[
+                    "Investment DNA weighting per mandate",
+                    "Multi-layer company signals & anomaly checks",
+                    "Explain-why matching & ranking logic",
+                  ]}
+                />
+                <EngineRow
+                  label="Outputs"
+                  items={[
+                    "Ranked target lists per mandate",
+                    "IC-ready snapshots for each company",
+                    "Live pipeline by stage, region and sponsor",
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* WHO IT'S FOR */}
+      <section id="who" className="py-16 border-t border-white/5 bg-black">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-2xl md:text-3xl font-semibold">
+            Who Aria Cortex is for
+          </h2>
+          <p className="mt-3 text-white/65 max-w-2xl text-sm md:text-base">
+            This is not a prosumer tool. Aria Cortex is built for teams that
+            treat origination as a core, repeatable discipline.
+          </p>
+
+          <p className="mt-3 text-xs md:text-sm text-white/50">
+            Typical clients: funds managing{" "}
+            <span className="font-medium text-white">€50M+</span> AUM, and
+            corporates/brands above{" "}
+            <span className="font-medium text-white">€30M</span> annual revenue.
+          </p>
+
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+            <WhoCard
+              title="Mid-market PE & growth funds"
+              text="Deal teams running 1–5 live mandates and needing a consistent, thesis-aligned pipeline instead of one-off lists."
+            />
+            <WhoCard
+              title="Corporate M&A & strategy"
+              text="Strategic acquirers and corporate development teams mapping targets across regions, products and business units."
+            />
+            <WhoCard
+              title="Manufacturers & distributors"
+              text="Brands and manufacturers looking for new distributors, suppliers or partners with clear financial and operational fit."
+            />
+            <WhoCard
+              title="Advisors & transaction services"
+              text="Law firms, accounting and intelligence/marketing firms that need dealflow and partner mapping for their clients."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* PAIN / WHY CHANGE */}
+      <section
+        id="pain"
+        className="py-20 bg-neutral-950 border-t border-white/5"
+      >
+        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-start">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-semibold">
+              Why your current origination is broken
+            </h2>
+            <p className="mt-4 text-white/70 text-sm md:text-base">
+              Most teams rely on a messy mix of databases, bankers, inbound and
+              spreadsheets. The result: noisy deal flow, reactive decisions and
+              a lot of time wasted on opportunities that were never executable
+              in the first place.
+            </p>
+          </div>
+
+          <div className="space-y-4 text-sm md:text-base">
+            <PainPoint
+              title="Fragmented data"
+              text="Multiple tools, no unified scoring, and no single view of companies across mandates, regions and sponsors."
+            />
+            <PainPoint
+              title="Manual, junior-heavy sourcing"
+              text="Associates and analysts spend hundreds of hours clicking around tools instead of progressing real deals."
+            />
+            <PainPoint
+              title="No shared definition of 'good'"
+              text="Each deal looks unique; the investment committee has no standardised way to compare or prioritise targets."
+            />
+            <PainPoint
+              title="Random, not systematic"
+              text="Deal flow is driven by who emails you and which banker calls that week, not by a deliberate search across your universe."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="how" className="py-24 border-t border-white/5 bg-black">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-2xl md:text-3xl font-semibold">
+            How Aria Cortex works
+          </h2>
+          <p className="mt-3 text-white/70 max-w-2xl text-sm md:text-base">
+            A structured origination system that turns your thesis into a live,
+            ranked pipeline instead of a static memo.
+          </p>
+
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-10">
+            <Step
+              number="01"
+              title="Define your Investment DNA & mandates"
+              text="We codify how your team actually approves deals: sectors, regions, ticket sizes, risk tolerance, ownership, timing and more."
+            />
+            <Step
+              number="02"
+              title="Cortex scans and scores your universe"
+              text="Signals from financials, hiring, web, funding, tech stack and more are fused into a single score per company per mandate."
+            />
+            <Step
+              number="03"
+              title="You work a ranked, explainable pipeline"
+              text="Your team sees ranked targets per mandate, with explain-why cards and IC-ready snapshots. No more random lists or gut-feel spreadsheets."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* INVESTMENT DNA ENGINE */}
+      <section
+        id="dna"
+        className="py-24 bg-gradient-to-b from-black to-neutral-900 border-t border-white/5"
+      >
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-2xl md:text-3xl font-semibold">
+            Investment DNA: your IC logic, quantified
+          </h2>
+          <p className="mt-3 text-white/70 max-w-2xl text-sm md:text-base">
+            The Investment DNA engine mirrors how your investment committee
+            thinks — so Aria Cortex doesn’t just match keywords, it matches how
+            you actually say “yes”.
+          </p>
+
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card
+              title="Financial strength"
+              text="Revenue, margins, leverage, cash, efficiency and resilience."
+            />
+            <Card
+              title="Strategic fit"
+              text="Sector, geography, customer type, product adjacency and market structure."
+            />
+            <Card
+              title="Dealability"
+              text="Ownership, readiness, governance, complexity and deal process risk."
+            />
+            <Card
+              title="Operational readiness"
+              text="Team depth, scalability, processes and technology maturity."
+            />
+            <Card
+              title="Risk & anomaly checks"
+              text="Outliers, inconsistencies and patterns that don’t survive serious scrutiny."
+            />
+            <Card
+              title="Timing & intent"
+              text="Hiring moves, web signals, funding behaviour and partner appetite."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ENGINE / INTELLIGENCE + PROOF */}
+      <section id="engine" className="py-24 bg-black border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-2xl md:text-3xl font-semibold">
+            Multi-layer intelligence, one score per target
+          </h2>
+          <p className="mt-3 text-white/70 max-w-2xl text-sm md:text-base">
+            Aria Cortex fuses dozens of datasets into a single, explainable
+            score per company — so you can stop debating sources and start
+            debating decisions, across Europe, the Middle East, the USA and
+            selected global markets.
+          </p>
+
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-10">
+            <Feature
+              title="Real-time signals"
+              text="Hiring, web traffic, funding, news and other time-sensitive indicators."
+            />
+            <Feature
+              title="Deep company data"
+              text="Structure, ownership, financials and historical performance where available."
+            />
+            <Feature
+              title="Technology stack"
+              text="What they run under the hood, from ecommerce tooling to marketing and infra."
+            />
+            <Feature
+              title="Team composition"
+              text="Executive depth, key hires and changes that matter for execution."
+            />
+            <Feature
+              title="Competitive context"
+              text="Who else plays the same game and how saturated the space really is."
+            />
+            <Feature
+              title="IC-ready snapshots"
+              text="Compact, AI-generated profiles you can drop straight into an investment memo."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* PROOF SECTION */}
+      <section
+        id="proof"
+        className="py-24 bg-neutral-950 border-t border-white/5"
+      >
+        <div className="max-w-7xl mx-auto px-6">
+          <h2 className="text-2xl md:text-3xl font-semibold">
+            Proven in live mandates
+          </h2>
+          <p className="mt-3 text-white/70 max-w-2xl text-sm md:text-base">
+            Aria Cortex is built from real mandates, not slides. For over a
+            decade, the workflows behind Cortex have delivered hundreds of
+            qualified matches per client across funds, corporates and advisors.
+          </p>
+
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-sm md:text-base">
+            <ProofStat
+              label="Technology consolidation strategy"
+              value="200+ acquisition opportunities sourced for a single technology roll-up strategy."
+            />
+            <ProofStat
+              label="Investment bank mandate"
+              value="5,600+ targets mapped across Europe for an investment bank, yielding 3 immediate investor meetings and ~30 warming conversations."
+            />
+            <ProofStat
+              label="Distributors, football & marketing"
+              value="50 distributors shortlisted for European expansion; 20 PE groups approached for a European football club sale (10 meetings, 1 close); 100+ qualified meetings generated for a marketing firm."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <PricingSection />
+
+      {/* FINAL CTA */}
+      <footer className="py-16 bg-black border-t border-white/10">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h3 className="text-2xl md:text-3xl font-semibold">
+            Ready to stop doing origination by hand?
+          </h3>
+          <p className="mt-3 text-sm md:text-base text-white/70 max-w-2xl mx-auto">
+            If you’re running serious mandates and want a disciplined, AI-driven
+            pipeline instead of disconnected tools and spreadsheets, Aria Cortex
+            is built for you.
+          </p>
+          <div className="mt-6 flex justify-center gap-4">
+            <button className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 rounded-md font-medium text-sm md:text-base">
+              Talk to Sales
+            </button>
+            <button className="px-6 py-3 rounded-md border border-white/20 hover:border-white/40 text-sm md:text-base">
+              Request Product Demo
+            </button>
+          </div>
+          <p className="mt-10 text-xs text-white/35">
+            © {new Date().getFullYear()} Aria Cortex. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
 
-/* ============ HEADER ============ */
+/* SUBCOMPONENTS */
 
-function Header() {
+function EngineRow({ label, items }) {
   return (
-    <header className="border-b border-white/10 bg-black/80 backdrop-blur-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-sm bg-emerald-500" />
-          <span className="font-semibold tracking-wide text-sm md:text-base">
-            Aria Cortex
-          </span>
-        </div>
-
-        <nav className="hidden md:flex items-center gap-8 text-sm text-white/70">
-          <a href="#product" className="hover:text-white">
-            Product
-          </a>
-          <a href="#solutions" className="hover:text-white">
-            Solutions
-          </a>
-          <a href="#dna" className="hover:text-white">
-            Investment DNA
-          </a>
-          <a href="#compare" className="hover:text-white">
-            Compare
-          </a>
-          <a href="#pricing" className="hover:text-white">
-            Pricing
-          </a>
-        </nav>
-
-        <div className="flex items-center gap-3">
-          <button className="hidden md:inline-flex px-3 py-1.5 rounded-full text-xs border border-white/20 text-white/80 hover:border-emerald-400 hover:text-white transition">
-            Log in
-          </button>
-          <button className="px-4 py-2 rounded-full text-xs md:text-sm bg-emerald-500 hover:bg-emerald-400 text-black font-semibold transition">
-            Request a demo
-          </button>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-/* ============ HERO ============ */
-
-function HeroSection() {
-  return (
-    <section className="border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-6 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-xs text-emerald-200 mb-5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            AI Origination Engine for Private Markets & Distribution
-          </div>
-
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight mb-4">
-            Turn global private markets
-            <span className="text-emerald-400"> into a deal machine</span>.
-          </h1>
-
-          <p className="text-sm md:text-base text-white/70 mb-6 max-w-xl">
-            Aria Cortex unifies company data, distributors, investors, and
-            outreach into one engine. Search, score, and contact the right
-            counterparties globally — without stitching together 10 different
-            tools.
-          </p>
-
-          <ul className="text-xs md:text-sm text-white/70 space-y-2 mb-8">
-            <li>• AI-scored Investment & Go-to-Market DNA for every lead</li>
-            <li>
-              • Global coverage across Europe, MEA, Americas, India & LATAM
-            </li>
-            <li>• Built from thousands of hours of live origination work</li>
-          </ul>
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button className="px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold transition">
-              Request a live demo
-            </button>
-            <button className="px-5 py-2.5 rounded-full border border-white/20 text-sm text-white/80 hover:border-emerald-400 hover:text-white transition">
-              Explore the platform
-            </button>
-          </div>
-        </div>
-
-        {/* Mock product preview */}
-        <div className="relative">
-          <div className="absolute -top-10 -left-6 h-24 w-24 rounded-full bg-emerald-500/20 blur-3xl" />
-          <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl" />
-
-          <div className="relative bg-zinc-950 border border-white/10 rounded-2xl p-4 shadow-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-xs text-white/60">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                Cortex Origination View
-              </div>
-              <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
-                Live scoring
-              </span>
-            </div>
-
-            <div className="flex gap-3 mb-4 text-[11px]">
-              <button className="px-3 py-1 rounded-full bg-white/5 border border-white/15 text-white">
-                Companies
-              </button>
-              <button className="px-3 py-1 rounded-full bg-transparent border border-white/10 text-white/60">
-                Investors
-              </button>
-              <button className="px-3 py-1 rounded-full bg-transparent border border-white/10 text-white/60">
-                Distributors
-              </button>
-            </div>
-
-            <div className="mb-3">
-              <div className="flex items-center gap-2 bg-zinc-900/80 border border-white/10 rounded-lg px-3 py-2 text-xs text-white/70">
-                <span className="text-white/40">Search</span>
-                <span className="text-white/60">
-                  "B2B packaging companies · EBITDA &gt; €5M · DACH + Benelux"
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              {mockLeads.map((lead) => (
-                <div
-                  key={lead.name}
-                  className="flex justify-between items-center bg-zinc-900/60 border border-white/10 rounded-lg px-3 py-2"
-                >
-                  <div>
-                    <div className="text-xs font-medium">{lead.name}</div>
-                    <div className="text-[10px] text-white/50">
-                      {lead.region} · {lead.sector}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <div className="flex items-center gap-1 text-[10px]">
-                      <span className="text-white/40">DNA Fit</span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/40">
-                        {lead.dnaFit}%
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px] text-white/50">
-                      Dealability:{" "}
-                      <span className="text-emerald-300">
-                        {lead.dealability}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 flex items-center justify-between text-[10px] text-white/50">
-              <span>12,483 targets in this thesis</span>
-              <span className="text-emerald-300">Sync to outreach →</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const mockLeads = [
-  {
-    name: "NordPack Solutions",
-    region: "DACH",
-    sector: "Sustainable Packaging",
-    dnaFit: 89,
-    dealability: "High",
-  },
-  {
-    name: "Benelux FlexiPack",
-    region: "Benelux",
-    sector: "Industrial Packaging",
-    dnaFit: 82,
-    dealability: "Medium",
-  },
-  {
-    name: "Iberia Retail Supply",
-    region: "Iberia",
-    sector: "Retail Distribution",
-    dnaFit: 77,
-    dealability: "High",
-  },
-];
-
-/* ============ TRUST STRIP ============ */
-
-function TrustStrip() {
-  return (
-    <section className="border-b border-white/10 bg-black">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <p className="text-xs md:text-sm text-white/40 mb-4">
-          Built from real mandates for investors, corporates, and distributors
-          across:
-        </p>
-        <div className="flex flex-wrap gap-6 md:gap-10 items-center text-white/40 text-xs md:text-sm">
-          <span>Mid-market PE funds</span>
-          <span>Corporate M&amp;A teams</span>
-          <span>Consumer &amp; beauty brands</span>
-          <span>Industrial distributors</span>
-          <span>Real estate investors</span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============ PRODUCT STRIP ============ */
-
-function ProductStrip() {
-  return (
-    <section
-      id="product"
-      className="border-b border-white/10 bg-gradient-to-b from-black to-zinc-950"
-    >
-      <div className="max-w-7xl mx-auto px-6 py-14 md:py-18">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-semibold mb-2">
-              One platform.
-              <span className="text-emerald-400"> Zero fragmentation.</span>
-            </h2>
-            <p className="text-sm text-white/70 max-w-xl">
-              Aria Cortex replaces the patchwork of PitchBook, Grata, ZoomInfo,
-              Apollo, Clay, Lemlist, and spreadsheets with one origination
-              engine.
-            </p>
-          </div>
-          <p className="text-xs text-white/50 max-w-sm">
-            From search to signed mandate, keep your team in a single
-            environment built for dealmakers — not marketers.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          <ProductCard
-            title="Global Company & Counterparty Search"
-            description="Search companies, investors, distributors, brands, and real estate owners with advanced thesis filters."
-            items={[
-              "Keywords + NAICS-style filters",
-              "Revenue / EBITDA / headcount bands",
-              "Ownership, geography, and ESG tags",
-            ]}
-          />
-          <ProductCard
-            title="Investment & GTM DNA Scoring"
-            description="AI scores every lead on fit, timing, and dealability — for both capital and distribution."
-            items={[
-              "Investment DNA for investors",
-              "Go-to-Market DNA for distributors",
-              "Red flags & fraud indicators",
-            ]}
-          />
-          <ProductCard
-            title="Pipeline & Mandate Management"
-            description="Move from chaos to clarity with a live pipeline linked to your theses and campaigns."
-            items={[
-              "Mandate-level views",
-              "Stage tracking & notes",
-              "Export or sync to CRM",
-            ]}
-          />
-          <ProductCard
-            title="Outreach & Introductions"
-            description="Trigger multi-channel outreach directly from Cortex and track replies by mandate."
-            items={[
-              "Sequenced outreach",
-              "Per-mandate inbox view",
-              "Intro tracking & reporting",
-            ]}
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ProductCard({
-  title,
-  description,
-  items,
-}: {
-  title: string;
-  description: string;
-  items: string[];
-}) {
-  return (
-    <div className="bg-zinc-950 border border-white/10 rounded-2xl p-5 flex flex-col justify-between">
-      <div>
-        <h3 className="text-sm font-semibold mb-2">{title}</h3>
-        <p className="text-xs text-white/60 mb-3">{description}</p>
-      </div>
-      <ul className="text-[11px] text-white/55 space-y-1">
+    <div>
+      <p className="text-xs font-semibold text-white/60">{label}</p>
+      <ul className="mt-1 space-y-1 text-xs text-white/70">
         {items.map((item) => (
           <li key={item}>• {item}</li>
         ))}
@@ -335,656 +408,218 @@ function ProductCard({
   );
 }
 
-/* ============ INVESTMENT DNA ============ */
-
-function InvestmentDNA() {
+function WhoCard({ title, text }) {
   return (
-    <section id="dna" className="border-b border-white/10 bg-black">
-      <div className="max-w-7xl mx-auto px-6 py-14 md:py-18 grid md:grid-cols-2 gap-10 items-center">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-semibold mb-3">
-            Investment DNA and Dealability,
-            <span className="text-emerald-400"> scored for you.</span>
-          </h2>
-          <p className="text-sm text-white/70 mb-4">
-            Cortex doesn’t just tell you who exists. It tells you who is likely
-            to transact, how, and with whom — across capital and distribution.
-          </p>
-          <ul className="text-xs text-white/70 space-y-2 mb-6">
-            <li>• Fit Score: sector, size, geography, business model</li>
-            <li>• Timing Score: growth trajectory, maturity, and signals</li>
-            <li>• Dealability Score: ownership, complexity, friction</li>
-            <li>• ESG & impact levers for sustainable mandates</li>
-          </ul>
-          <p className="text-xs text-white/50">
-            All mapped to each mandate’s custom DNA profile — configurable for
-            PE, growth, VC, corporates, distributors, and real estate.
-          </p>
-        </div>
-
-        <div className="bg-zinc-950 border border-white/10 rounded-2xl p-4 text-xs">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-white/70">Mandate: EU Consumer Roll-up</span>
-            <span className="text-emerald-300 text-[11px]">
-              DNA model: Cortex-PE-Consumer-01
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            {[
-              { label: "Fit Score", value: "88%", tone: "High" },
-              { label: "Timing", value: "76%", tone: "Good" },
-              { label: "Dealability", value: "81%", tone: "High" },
-              { label: "ESG Leverage", value: "69%", tone: "Moderate" },
-            ].map((metric) => (
-              <div
-                key={metric.label}
-                className="bg-zinc-900/80 border border-white/10 rounded-xl p-3"
-              >
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[11px] text-white/60">
-                    {metric.label}
-                  </span>
-                  <span className="text-[11px] text-emerald-300">
-                    {metric.tone}
-                  </span>
-                </div>
-                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-400"
-                    style={{ width: metric.value }}
-                  />
-                </div>
-                <div className="mt-1 text-[10px] text-white/50">
-                  {metric.value}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="border-t border-white/10 pt-3 mt-2 text-[11px] text-white/60">
-            <div className="flex justify-between mb-1">
-              <span>Top segments flagged</span>
-              <span className="text-emerald-300">View 327 matches →</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                "Beauty & personal care",
-                "Premium packaging",
-                "Omnichannel brands",
-              ].map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-1 rounded-full bg-white/5 border border-white/10 text-[10px]"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <div className="bg-neutral-900 border border-white/10 rounded-xl p-6">
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="mt-3 text-sm text-white/70">{text}</p>
+    </div>
   );
 }
 
-/* ============ WORKFLOW SECTION ============ */
-
-function WorkflowSection() {
+function PainPoint({ title, text }) {
   return (
-    <section className="border-b border-white/10 bg-zinc-950">
-      <div className="max-w-7xl mx-auto px-6 py-14 md:py-18">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-semibold mb-2">
-              From thesis to meetings,
-              <span className="text-emerald-400"> in one workflow.</span>
-            </h2>
-            <p className="text-sm text-white/70 max-w-xl">
-              Cortex is built to get you in the room faster — not just give you
-              more rows in a spreadsheet.
-            </p>
-          </div>
-          <p className="text-xs text-white/50 max-w-sm">
-            Align your team on one source of truth, one pipeline, and one
-            outreach rhythm — across investors, targets, and distributors.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-4 gap-4 md:gap-6 text-xs">
-          <StepCard
-            step="01"
-            title="Define mandate & DNA"
-            text="Set sector, size, geography, and strategic filters for your mandate. Cortex builds a custom DNA model."
-          />
-          <StepCard
-            step="02"
-            title="Map global opportunities"
-            text="Search companies, investors, and distributors that match your DNA, globally — not just where legacy tools have data."
-          />
-          <StepCard
-            step="03"
-            title="Score & prioritize"
-            text="Rank leads by fit, timing, dealability, and ESG. Focus on the 5–10% most likely to convert."
-          />
-          <StepCard
-            step="04"
-            title="Launch outreach & track intros"
-            text="Trigger multi-touch campaigns, track replies by mandate, and measure meetings and conversions."
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function StepCard({
-  step,
-  title,
-  text,
-}: {
-  step: string;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="bg-black border border-white/10 rounded-2xl p-4 flex flex-col gap-2">
-      <span className="text-[11px] text-emerald-300 font-mono">
-        Step {step}
-      </span>
+    <div className="bg-neutral-900 border border-white/10 rounded-xl p-4">
       <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="text-xs text-white/60">{text}</p>
+      <p className="mt-2 text-xs md:text-sm text-white/70">{text}</p>
     </div>
   );
 }
 
-/* ============ SOLUTIONS SECTION ============ */
-
-function SolutionsSection() {
+function Step({ number, title, text }) {
   return (
-    <section id="solutions" className="border-b border-white/10 bg-black">
-      <div className="max-w-7xl mx-auto px-6 py-14 md:py-18">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-semibold mb-2">
-              Built for the way
-              <span className="text-emerald-400"> modern deal teams</span> work.
-            </h2>
-            <p className="text-sm text-white/70 max-w-xl">
-              Whether you deploy capital, acquire companies, or build
-              distribution, Cortex adapts to your playbook.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-4 md:gap-6 text-xs">
-          <SolutionCard
-            title="Private Equity & Growth"
-            body="Originate theses, build roll-up maps, and surface founder-led and sponsor-backed targets before your competitors."
-            bullets={[
-              "Thesis maps",
-              "Add-on tracking",
-              "Global private company search",
-            ]}
-          />
-          <SolutionCard
-            title="Corporate Development"
-            body="Generate strategic target lists by product, tech, brand, or channel — plus market snapshots for your board."
-            bullets={["Market maps", "Competitive landscapes", "M&A pipeline"]}
-          />
-          <SolutionCard
-            title="Distributors, Brands & Real Estate"
-            body="Find distributors, suppliers, brands, and properties that match your expansion DNA — and contact them in one place."
-            bullets={[
-              "Distributor mapping",
-              "Brand & buyer data",
-              "Owner & operator discovery",
-            ]}
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SolutionCard({
-  title,
-  body,
-  bullets,
-}: {
-  title: string;
-  body: string;
-  bullets: string[];
-}) {
-  return (
-    <div className="bg-zinc-950 border border-white/10 rounded-2xl p-5 flex flex-col justify-between">
-      <div>
-        <h3 className="text-sm font-semibold mb-2">{title}</h3>
-        <p className="text-xs text-white/60 mb-3">{body}</p>
-      </div>
-      <ul className="text-[11px] text-white/55 space-y-1">
-        {bullets.map((b) => (
-          <li key={b}>• {b}</li>
-        ))}
-      </ul>
+    <div className="bg-neutral-900 p-8 rounded-xl border border-white/10">
+      <div className="text-emerald-400 font-bold text-xl">{number}</div>
+      <h3 className="mt-3 text-xl font-semibold">{title}</h3>
+      <p className="mt-2 text-sm text-white/70">{text}</p>
     </div>
   );
 }
 
-/* ============ GLOBAL COVERAGE ============ */
-
-function GlobalCoverage() {
+function Card({ title, text }) {
   return (
-    <section className="border-b border-white/10 bg-zinc-950">
-      <div className="max-w-7xl mx-auto px-6 py-14 md:py-18 grid md:grid-cols-2 gap-10 items-center">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-semibold mb-3">
-            Global by design,
-            <span className="text-emerald-400"> not by marketing slide.</span>
+    <div className="bg-neutral-900 p-8 rounded-xl border border-white/10">
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="mt-3 text-sm text-white/70">{text}</p>
+    </div>
+  );
+}
+
+function Feature({ title, text }) {
+  return (
+    <div className="bg-neutral-900 p-8 rounded-xl border border-white/10 h-full">
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="mt-3 text-sm text-white/70">{text}</p>
+    </div>
+  );
+}
+
+function ProofStat({ label, value }) {
+  return (
+    <div className="bg-neutral-900 border border-white/10 rounded-xl p-5">
+      <p className="text-xs uppercase tracking-wide text-white/40">{label}</p>
+      <p className="mt-2 text-sm text-white/80">{value}</p>
+    </div>
+  );
+}
+
+/* PRICING SECTION – platform-first, performance-aligned services */
+
+function PricingSection() {
+  const tiers = [
+    {
+      name: "Analyst",
+      price: "€1,500 / month",
+      billing: "Billed annually · €18,000 / year",
+      description:
+        "For solo investors and small teams validating a focused thesis with a disciplined pipeline.",
+      outcome:
+        "Designed to support ~1 live mandate with a steady stream of qualified, scored targets each month.",
+      features: [
+        "1–2 named user seats",
+        "1 active mandate (sector / region)",
+        "Focused region coverage",
+        "Structured pipeline of scored companies each month",
+        "Core signals & Investment DNA scoring",
+        "Standard support via email",
+      ],
+      highlighted: false,
+    },
+    {
+      name: "Fund",
+      price: "€4,500 / month",
+      billing: "Billed annually · €54,000 / year",
+      description:
+        "For funds and M&A teams running multiple mandates across regions and strategies.",
+      outcome:
+        "Designed to support 2–3 live mandates with a continuous flow of ranked, IC-ready opportunities.",
+      features: [
+        "Up to 5 named user seats",
+        "Up to 3 active mandates in parallel",
+        "Multi-region coverage",
+        "Institutional-grade signals (tech, hiring, funding, web)",
+        "Portfolio tagging, segments & custom views",
+        "Priority support & quarterly strategy reviews",
+      ],
+      highlighted: true,
+    },
+    {
+      name: "Institutional",
+      price: "From €9,000 / month",
+      billing: "Typical contracts €100k+ / year",
+      description:
+        "For institutions standardising origination across desks, geographies and product lines.",
+      outcome:
+        "Designed to embed a shared origination engine across multiple teams, regions and strategies.",
+      features: [
+        "10+ named user seats",
+        "Unlimited mandates (by strategy, region or product line)",
+        "Global coverage across defined universes",
+        "High-volume scoring with fair-use safeguards",
+        "Custom Investment DNA models per strategy",
+        "API, SSO & enterprise governance",
+        "Dedicated success team & SLA",
+      ],
+      highlighted: false,
+    },
+  ];
+
+  return (
+    <section
+      id="pricing"
+      className="py-32 bg-neutral-900 border-t border-white/5"
+    >
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center max-w-2xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-semibold">
+            Pricing for institutional origination
           </h2>
-          <p className="text-sm text-white/70 mb-4">
-            Cortex is engineered from real mandates across Europe, the Middle
-            East, Africa, India, the Americas, and LATAM — not just US-centric
-            venture data.
+          <p className="mt-4 text-sm md:text-base text-white/60">
+            Aria Cortex is the origination layer for investors, funds and
+            corporate M&amp;A teams. Plans are sold on annual contracts, and we
+            onboard a limited number of new teams each quarter.
           </p>
-          <ul className="text-xs text-white/70 space-y-2 mb-6">
-            <li>
-              • Europe: DACH, Benelux, Nordics, UK &amp; Ireland, Iberia, CEE
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-10">
+          {tiers.map((tier) => (
+            <PricingCard key={tier.name} tier={tier} />
+          ))}
+        </div>
+
+        <div className="mt-10 max-w-3xl mx-auto text-center text-sm md:text-base text-white/55">
+          <p>
+            For most clients,{" "}
+            <span className="text-white font-medium">
+              one additional closed deal per year
+            </span>{" "}
+            more than covers the annual Aria Cortex subscription.
+          </p>
+        </div>
+
+        <div className="mt-8 max-w-3xl mx-auto text-center text-sm md:text-base text-white/60">
+          <p>
+            Need full{" "}
+            <span className="text-white font-medium">
+              Origination-as-a-Service
+            </span>{" "}
+            — including mapping, outreach and introductions on top of the
+            platform, with a{" "}
+            <span className="text-emerald-400 font-medium">
+              performance-aligned retainer + upside model
+            </span>
+            ? Request a custom proposal.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PricingCard({ tier }) {
+  const { name, price, billing, description, outcome, features, highlighted } =
+    tier;
+
+  return (
+    <div
+      className={
+        "flex flex-col h-full rounded-xl border bg-neutral-900 p-8 md:p-10 " +
+        (highlighted
+          ? "border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.35)]"
+          : "border-white/10")
+      }
+    >
+      <div className="flex-1">
+        <h3 className="text-xl font-semibold">{name}</h3>
+
+        <p className="mt-6 text-3xl font-bold">{price}</p>
+        <p className="mt-2 text-xs uppercase tracking-wide text-white/40">
+          {billing}
+        </p>
+
+        <p className="mt-4 text-sm text-white/70">{description}</p>
+        <p className="mt-3 text-sm text-white/80 italic">{outcome}</p>
+
+        <ul className="mt-6 space-y-2 text-sm text-white/70">
+          {features.map((feature) => (
+            <li key={feature} className="flex items-start gap-2">
+              <span className="mt-[6px] h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span>{feature}</span>
             </li>
-            <li>• MENA &amp; Africa: GCC, North &amp; Sub-Saharan Africa</li>
-            <li>• Americas: US, Canada, Mexico, selected LATAM hubs</li>
-            <li>• India &amp; selected APAC markets</li>
-          </ul>
-          <p className="text-xs text-white/50">
-            Use Cortex to discover overlooked counterparties where legacy
-            databases are blind — especially in emerging markets and fragmented
-            sectors.
-          </p>
-        </div>
-
-        <div className="bg-black border border-white/10 rounded-2xl p-5 text-xs">
-          <p className="text-white/60 mb-3">
-            Example: Distributor mapping mandate
-          </p>
-          <ul className="space-y-2 text-white/70">
-            <li>• 42 countries covered in one search</li>
-            <li>• 3,200+ distributors mapped for a single corporate mandate</li>
-            <li>• 200+ high-fit targets prioritized by Dealability Score</li>
-            <li>
-              • Outreach launched directly from Cortex, not exported to CSV
-            </li>
-          </ul>
-        </div>
+          ))}
+        </ul>
       </div>
-    </section>
-  );
-}
 
-/* ============ COMPARISON PREVIEW ============ */
-
-function ComparisonPreview() {
-  return (
-    <section id="compare" className="border-b border-white/10 bg-black">
-      <div className="max-w-7xl mx-auto px-6 py-14 md:py-18">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-semibold mb-2">
-              How Aria Cortex compares to
-              <span className="text-emerald-400"> PitchBook &amp; Grata.</span>
-            </h2>
-            <p className="text-sm text-white/70 max-w-xl">
-              Cortex doesn’t replace one tool. It replaces the patchwork behind
-              your whole origination stack.
-            </p>
-          </div>
-          <a
-            href="/compare"
-            className="text-xs text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
-          >
-            View full comparison →
-          </a>
-        </div>
-
-        <div className="overflow-x-auto text-xs">
-          <table className="min-w-full border border-white/10 rounded-xl overflow-hidden">
-            <thead className="bg-zinc-950/80">
-              <tr>
-                <th className="text-left px-4 py-3 border-b border-white/10 text-white/60">
-                  Capability
-                </th>
-                <th className="text-left px-4 py-3 border-b border-white/10 text-white/60">
-                  PitchBook
-                </th>
-                <th className="text-left px-4 py-3 border-b border-white/10 text-white/60">
-                  Grata
-                </th>
-                <th className="text-left px-4 py-3 border-b border-white/10 text-emerald-300">
-                  Aria Cortex
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-black/80">
-              {comparisonRows.map((row, idx) => (
-                <tr
-                  key={row.capability}
-                  className={idx % 2 === 0 ? "bg-black" : "bg-zinc-950/60"}
-                >
-                  <td className="px-4 py-3 border-b border-white/10 text-white/70">
-                    {row.capability}
-                  </td>
-                  <td className="px-4 py-3 border-b border-white/10 text-white/60">
-                    {row.pitchbook}
-                  </td>
-                  <td className="px-4 py-3 border-b border-white/10 text-white/60">
-                    {row.grata}
-                  </td>
-                  <td className="px-4 py-3 border-b border-white/10 text-emerald-300">
-                    {row.cortex}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const comparisonRows = [
-  {
-    capability: "Global private company coverage",
-    pitchbook: "Strong in US/UK, limited elsewhere",
-    grata: "Good mid-market coverage",
-    cortex: "Global + distributors + emerging markets",
-  },
-  {
-    capability: "Distributor & channel intelligence",
-    pitchbook: "No",
-    grata: "No",
-    cortex: "Yes – built-in",
-  },
-  {
-    capability: "Investment & GTM DNA scoring",
-    pitchbook: "No",
-    grata: "No",
-    cortex: "Native engine",
-  },
-  {
-    capability: "Outreach & introductions",
-    pitchbook: "Requires external tools",
-    grata: "Requires external tools",
-    cortex: "Integrated",
-  },
-  {
-    capability: "Emerging market fit",
-    pitchbook: "Weak",
-    grata: "Limited",
-    cortex: "Designed for it",
-  },
-];
-
-/* ============ TESTIMONIALS ============ */
-
-function TestimonialsSection() {
-  return (
-    <section className="border-b border-white/10 bg-zinc-950">
-      <div className="max-w-7xl mx-auto px-6 py-14 md:py-18">
-        <h2 className="text-2xl md:text-3xl font-semibold mb-6">
-          What dealmakers say about
-          <span className="text-emerald-400"> this way of working.</span>
-        </h2>
-
-        <div className="grid md:grid-cols-3 gap-4 md:gap-6 text-xs">
-          <TestimonialCard
-            quote="We used to jump between three data tools and two outreach platforms. Cortex compresses that into one pipeline."
-            role="Partner, mid-market PE (EU)"
-          />
-          <TestimonialCard
-            quote="For distributor mapping across 20+ countries, legacy databases were blind. Cortex actually shows you who exists and who is relevant."
-            role="Head of International, consumer brand"
-          />
-          <TestimonialCard
-            quote="Dealability scoring is what makes the difference. Our team finally starts with the right 10% of leads."
-            role="Director, corporate development"
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function TestimonialCard({ quote, role }: { quote: string; role: string }) {
-  return (
-    <div className="bg-black border border-white/10 rounded-2xl p-5 flex flex-col justify-between">
-      <p className="text-xs text-white/80 mb-3">“{quote}”</p>
-      <p className="text-[11px] text-white/50">{role}</p>
+      <button
+        className={
+          "mt-8 w-full py-3 rounded-md text-sm font-medium " +
+          (highlighted
+            ? "bg-emerald-500 hover:bg-emerald-600 text-black"
+            : "bg-white/5 hover:bg-white/10 text-white")
+        }
+      >
+        {name === "Institutional" ? "Speak to Aria Team" : "Talk to Sales"}
+      </button>
     </div>
-  );
-}
-
-/* ============ PRICING TEASER ============ */
-
-function PricingTeaser() {
-  return (
-    <section id="pricing" className="border-b border-white/10 bg-black">
-      <div className="max-w-7xl mx-auto px-6 py-14 md:py-18">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-semibold mb-2">
-              Pricing that reflects
-              <span className="text-emerald-400"> value created</span>, not
-              seats.
-            </h2>
-            <p className="text-sm text-white/70 max-w-xl mb-3">
-              Cortex is structured for serious teams who care about net new
-              dealflow — not vanity logins.
-            </p>
-            <p className="text-xs text-white/50 max-w-md">
-              Engagements typically combine a platform subscription with aligned
-              success fees for closed deals. Exact pricing depends on team size,
-              geographies, and mandate complexity.
-            </p>
-          </div>
-
-          <div className="bg-zinc-950 border border-emerald-500/40 rounded-2xl p-5 text-xs max-w-sm">
-            <p className="text-[11px] text-emerald-300 mb-2 uppercase tracking-wide">
-              Typical starting points
-            </p>
-            <ul className="space-y-2 text-white/70 mb-4">
-              <li>• Platform subscription from €2.5K–€10K / month</li>
-              <li>• Optional success fee overlays (1–2% typical)</li>
-              <li>• Add-ons for social, landing pages, and revamp work</li>
-            </ul>
-            <p className="text-[11px] text-white/60 mb-3">
-              One good recurring client or transaction typically pays for the
-              platform several times over.
-            </p>
-            <button className="w-full mt-2 px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs transition">
-              Discuss pricing &amp; structure
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============ FINAL CTA ============ */
-
-function FinalCTA() {
-  return (
-    <section className="border-b border-white/10 bg-gradient-to-r from-emerald-500/10 via-black to-emerald-500/10">
-      <div className="max-w-7xl mx-auto px-6 py-14 md:py-18 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-semibold mb-2">
-            Ready to see Aria Cortex
-            <span className="text-emerald-400"> on your mandates?</span>
-          </h2>
-          <p className="text-sm text-white/70 max-w-xl">
-            Share your current focus — sector, region, and ticket range — and
-            we’ll show you how Cortex would map and score your universe.
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button className="px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold transition">
-            Book a 30-minute demo
-          </button>
-          <button className="px-5 py-2.5 rounded-full border border-white/20 text-sm text-white/80 hover:border-emerald-400 hover:text-white transition">
-            Get sample deal map
-          </button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============ FOOTER ============ */
-
-export function Footer() {
-  return (
-    <footer className="bg-black border-t border-white/10 text-white">
-      <div className="max-w-7xl mx-auto px-6 py-20 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-12">
-        {/* PRODUCTS */}
-        <div>
-          <h3 className="text-emerald-400 font-semibold mb-4 uppercase tracking-wide text-sm">
-            Products
-          </h3>
-          <ul className="space-y-2 text-sm text-white/80">
-            <li>Origination Engine</li>
-            <li>Market Intelligence</li>
-            <li>AI Investment DNA</li>
-            <li>Global Company Search</li>
-            <li>Live Mandates</li>
-            <li>Pipeline Manager</li>
-            <li>Cortex API</li>
-            <li>Data Warehouse</li>
-          </ul>
-        </div>
-
-        {/* SOLUTIONS */}
-        <div>
-          <h3 className="text-emerald-400 font-semibold mb-4 uppercase tracking-wide text-sm">
-            Solutions
-          </h3>
-          <ul className="space-y-2 text-sm text-white/80">
-            <li>Private Equity</li>
-            <li>Growth Equity</li>
-            <li>Venture Investors</li>
-            <li>Investment Banking</li>
-            <li>Corporate Development</li>
-            <li>Distributors &amp; Brands</li>
-            <li>Real Estate Investors</li>
-            <li>Family Offices</li>
-            <li>Private Credit</li>
-            <li>Consulting</li>
-          </ul>
-        </div>
-
-        {/* FEATURES */}
-        <div>
-          <h3 className="text-emerald-400 font-semibold mb-4 uppercase tracking-wide text-sm">
-            Features
-          </h3>
-          <ul className="space-y-2 text-sm text-white/80">
-            <li>Smart Deal Sourcing</li>
-            <li>Buyer &amp; Investor Matching</li>
-            <li>Distributor Mapping</li>
-            <li>Conference Intelligence</li>
-            <li>Live Deal Signals</li>
-            <li>CRM Sync</li>
-            <li>Pipeline Management</li>
-            <li>Fraud &amp; Red Flag Checks</li>
-            <li>Public &amp; Private Comps</li>
-            <li>Market Opportunity Maps</li>
-            <li>Industry Research</li>
-            <li>Relationship Intelligence</li>
-          </ul>
-        </div>
-
-        {/* COMPANY */}
-        <div>
-          <h3 className="text-emerald-400 font-semibold mb-4 uppercase tracking-wide text-sm">
-            Company
-          </h3>
-          <ul className="space-y-2 text-sm text-white/80">
-            <li>About Aria Ventures</li>
-            <li>Why Aria Cortex</li>
-            <li>Careers</li>
-            <li>Partners</li>
-            <li>Press &amp; Media</li>
-            <li>Market Insights</li>
-            <li>Referral Program</li>
-            <li>Terms &amp; Pricing</li>
-          </ul>
-        </div>
-
-        {/* COMPARE / TECH / DATA */}
-        <div>
-          <h3 className="text-emerald-400 font-semibold mb-4 uppercase tracking-wide text-sm">
-            Compare
-          </h3>
-          <ul className="space-y-2 text-sm text-white/80 mb-6">
-            <li>
-              <a href="/compare" className="hover:text-emerald-400">
-                Aria Cortex vs PitchBook vs Grata
-              </a>
-            </li>
-            <li>Aria Cortex vs PitchBook</li>
-            <li>Aria Cortex vs Grata</li>
-            <li>Aria Cortex vs SourceScrub</li>
-            <li>Aria Cortex vs ZoomInfo</li>
-            <li>Aria Cortex vs Dealroom</li>
-          </ul>
-
-          <h3 className="text-emerald-400 font-semibold mb-4 uppercase tracking-wide text-sm">
-            Technology
-          </h3>
-          <ul className="space-y-2 text-sm text-white/80 mb-6">
-            <li>AI Technology</li>
-            <li>The Cortex Engine</li>
-            <li>Matching Algorithm</li>
-            <li>ESG &amp; Dealability Models</li>
-          </ul>
-
-          <h3 className="text-emerald-400 font-semibold mb-4 uppercase tracking-wide text-sm">
-            Data
-          </h3>
-          <ul className="space-y-2 text-sm text-white/80">
-            <li>Global Coverage</li>
-            <li>Data Sources</li>
-            <li>Data Quality</li>
-            <li>Compliance &amp; Privacy</li>
-          </ul>
-        </div>
-
-        {/* PLATFORM */}
-        <div>
-          <h3 className="text-emerald-400 font-semibold mb-4 uppercase tracking-wide text-sm">
-            Platform
-          </h3>
-          <ul className="space-y-2 text-sm text-white/80 mb-6">
-            <li>Log In</li>
-            <li>Get Started</li>
-          </ul>
-
-          <h3 className="text-emerald-400 font-semibold mb-4 uppercase tracking-wide text-sm">
-            Get the App
-          </h3>
-          <div className="flex flex-col gap-3 mt-4">
-            <div className="h-10 w-32 bg-white/10 rounded-md flex items-center justify-center text-xs text-white/60">
-              App Store (Soon)
-            </div>
-            <div className="h-10 w-32 bg-white/10 rounded-md flex items-center justify-center text-xs text-white/60">
-              Google Play (Soon)
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="border-t border-white/10 mt-10 py-6 text-center text-sm text-white/60">
-        ©2025 Aria Ventures. All Rights Reserved.
-      </div>
-    </footer>
   );
 }
