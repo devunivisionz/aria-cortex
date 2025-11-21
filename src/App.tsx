@@ -14,6 +14,7 @@ import SignupPage from "./pages/Authentication/Signup/Signup";
 import { LoginPage } from "./pages/Authentication/Login/Login";
 import OTPinput from "./pages/Authentication/OTPinput/OTPinput";
 import HomepageOld from "./pages/HomepageOld/HomepageOld";
+import AIAssistantAdvanced from "./components/AiAssistant/AiAssistant";
 // import "./index.css";
 
 // Protected Route Component
@@ -27,7 +28,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/home" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <AIAssistantAdvanced />
+    </>
+  );
 };
 
 // Public Route Component (redirects to dashboard if already logged in)
