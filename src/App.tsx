@@ -13,6 +13,7 @@ import Billing from "./pages/Billing";
 import SignupPage from "./pages/Authentication/Signup/Signup";
 import { LoginPage } from "./pages/Authentication/Login/Login";
 import OTPinput from "./pages/Authentication/OTPinput/OTPinput";
+import HomepageOld from "./pages/HomepageOld/HomepageOld";
 // import "./index.css";
 
 // Protected Route Component
@@ -59,6 +60,7 @@ export default function App() {
               element={
                 <PublicRoute>
                   <Homepage />
+                  <HomepageOld />
                 </PublicRoute>
               }
             />

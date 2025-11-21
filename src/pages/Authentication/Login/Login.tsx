@@ -2,6 +2,7 @@ import { useState } from "react";
 import Input from "../../../components/AuthenticationComponents/InputFields";
 import Button from "../../../components/Button";
 import { Link, useNavigate } from "react-router-dom";
+// import { authService } from "../../../lib/supabaseClient";
 
 export function LoginPage({
   onSwitchToSignup,
@@ -10,18 +11,133 @@ export function LoginPage({
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+
+  const handleSubmit = async (
+    e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
-    localStorage.setItem("isAuthenticated", "true");
-    navigate("/");
+
+    // Reset error message
+    setError("");
+
+    // Validation
+    if (!email.trim()) {
+      setError("Please enter your email");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Call Supabase Edge Function for login
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            password: password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || "Failed to sign in");
+      }
+
+      // Success - store the session
+      if (data.session) {
+        // Store the access token
+        localStorage.setItem("access_token", data.session.access_token);
+        localStorage.setItem("refresh_token", data.session.refresh_token);
+
+        // Store user data if needed
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+
+        // If remember me is checked, store email
+        if (rememberMe) {
+          localStorage.setItem("remembered_email", email);
+        } else {
+          localStorage.removeItem("remembered_email");
+        }
+
+        // Set authentication flag
+        localStorage.setItem("isAuthenticated", "true");
+
+        // Navigate to dashboard
+        navigate("/");
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+
+      // Handle specific error messages
+      if (
+        err.message.includes("Invalid login credentials") ||
+        err.message.includes("Invalid email or password")
+      ) {
+        setError("Invalid email or password. Please try again.");
+      } else if (err.message.includes("Email not confirmed")) {
+        setError("Please verify your email before signing in.");
+      } else if (err.message.includes("User not found")) {
+        setError("No account found with this email. Please sign up first.");
+      } else if (
+        err.message.includes("network") ||
+        err.message.includes("Failed to fetch")
+      ) {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError(err.message || "Failed to sign in. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      // await authService.signInWithGoogle();
+      // User will be redirected to Google OAuth
+    } catch (err: any) {
+      console.error("Google sign-in error:", err);
+      setError("Failed to sign in with Google. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  // Check for remembered email on component mount
+  useState(() => {
+    const rememberedEmail = localStorage.getItem("remembered_email");
+    if (rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberMe(true);
+    }
+  });
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        width: "100%", // Use 100% instead of 100vw
+        width: "100%",
         background:
           "linear-gradient(to bottom, #000000 0%, #0a0a0a 50%, #000000 100%)",
         display: "flex",
@@ -126,8 +242,25 @@ export function LoginPage({
           Sign in to your Aria Cortex account
         </p>
 
+        {/* Error Message */}
+        {error && (
+          <div
+            style={{
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              padding: "0.75rem 1rem",
+              marginBottom: "1.5rem",
+              color: "#f87171",
+              fontSize: "0.875rem",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         {/* Form Fields */}
-        <div>
+        <form onSubmit={handleSubmit}>
           <Input
             label="Email"
             type="email"
@@ -135,6 +268,7 @@ export function LoginPage({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={isLoading}
           />
 
           <Input
@@ -144,6 +278,7 @@ export function LoginPage({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isLoading}
           />
 
           <div
@@ -166,6 +301,9 @@ export function LoginPage({
             >
               <input
                 type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={isLoading}
                 style={{
                   width: "16px",
                   height: "16px",
@@ -175,8 +313,8 @@ export function LoginPage({
               />
               Remember me
             </label>
-            <a
-              href="#"
+            <Link
+              to="/forgot-password"
               style={{
                 fontSize: "0.875rem",
                 color: "#10b981",
@@ -184,16 +322,20 @@ export function LoginPage({
                 fontWeight: 500,
               }}
               onMouseEnter={(e) =>
-                (e.target.style.textDecoration = "underline")
+                (e.currentTarget.style.textDecoration = "underline")
               }
-              onMouseLeave={(e) => (e.target.style.textDecoration = "none")}
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.textDecoration = "none")
+              }
             >
               Forgot password?
-            </a>
+            </Link>
           </div>
 
-          <Button onClick={handleSubmit}>Sign in</Button>
-        </div>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Signing in..." : "Sign in"}
+          </Button>
+        </form>
 
         {/* Divider */}
         <div
@@ -229,7 +371,12 @@ export function LoginPage({
         </div>
 
         {/* Social Login */}
-        <Button variant="secondary" style={{ marginBottom: "1rem" }}>
+        <Button
+          variant="secondary"
+          style={{ marginBottom: "1rem" }}
+          onClick={handleGoogleSignIn}
+          disabled={isLoading}
+        >
           <span
             style={{
               display: "flex",
@@ -272,17 +419,17 @@ export function LoginPage({
           Don't have an account?{" "}
           <Link
             to="/signup"
-            // onClick={(e) => {
-            //   e.preventDefault();
-            //   onSwitchToSignup();
-            // }}
             style={{
               color: "#10b981",
               textDecoration: "none",
               fontWeight: 600,
             }}
-            onMouseEnter={(e) => (e.target.style.textDecoration = "underline")}
-            onMouseLeave={(e) => (e.target.style.textDecoration = "none")}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.textDecoration = "underline")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.textDecoration = "none")
+            }
           >
             Sign up
           </Link>
