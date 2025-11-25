@@ -358,7 +358,11 @@ export default function MandateDNACreator() {
 
         {/* Mandate Creation Tab */}
         <TabsContent value="mandate">
-          <Card style={{ borderColor: theme.primaryBorder }}>
+          <Card
+            style={{
+              borderColor: theme.primaryBorder,
+            }}
+          >
             <CardHeader>
               <CardTitle style={{ color: theme.text }}>
                 New Strategic Mandate
@@ -369,410 +373,495 @@ export default function MandateDNACreator() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Basic Information */}
+              {/* Basic Information Section */}
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="mandate-name" style={{ color: theme.text }}>
-                    Mandate Name
-                  </Label>
-                  <Input
-                    id="mandate-name"
-                    placeholder="e.g., European Market Expansion 2024"
-                    value={mandate.name}
-                    onChange={(e) =>
-                      setMandate((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                    style={{
-                      borderColor: theme.primaryBorder,
-                      color: theme.text,
-                    }}
-                  />
-                </div>
+                <h3
+                  className="text-sm font-medium"
+                  style={{ color: theme.text }}
+                >
+                  Basic Information
+                </h3>
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="mandate-name" style={{ color: theme.text }}>
+                      Mandate Name <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="mandate-name"
+                      placeholder="e.g., European Market Expansion 2024"
+                      value={mandate.name}
+                      onChange={(e) =>
+                        setMandate((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      style={{
+                        borderColor: theme.primaryBorder,
+                        color: theme.text,
+                      }}
+                    />
+                  </div>
 
-                <div>
-                  <Label
-                    htmlFor="mandate-description"
-                    style={{ color: theme.text }}
-                  >
-                    Description
-                  </Label>
-                  <Textarea
-                    id="mandate-description"
-                    placeholder="Describe the strategic objectives and goals..."
-                    rows={4}
-                    value={mandate.description}
-                    onChange={(e) =>
-                      setMandate((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
-                    style={{
-                      borderColor: theme.primaryBorder,
-                      color: theme.text,
-                    }}
-                  />
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="mandate-description"
+                      style={{ color: theme.text }}
+                    >
+                      Description
+                    </Label>
+                    <Textarea
+                      id="mandate-description"
+                      placeholder="Describe the strategic objectives and goals..."
+                      rows={4}
+                      value={mandate.description}
+                      onChange={(e) =>
+                        setMandate((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
+                      style={{
+                        borderColor: theme.primaryBorder,
+                        color: theme.text,
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Target Markets */}
-              <div>
-                <Label style={{ color: theme.text }}>Target Markets</Label>
-                <div className="flex gap-2 mb-2">
-                  <Input
-                    placeholder="Add target market..."
-                    value={currentInput.targetMarket}
-                    onChange={(e) =>
-                      setCurrentInput((prev) => ({
-                        ...prev,
-                        targetMarket: e.target.value,
-                      }))
-                    }
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addToMandateArray(
-                          "targetMarkets",
-                          currentInput.targetMarket
-                        );
+              {/* Divider */}
+              <div
+                className="border-t"
+                style={{ borderColor: theme.primaryBorder }}
+              />
+
+              {/* Targeting Criteria Section */}
+              <div className="space-y-5">
+                <h3
+                  className="text-sm font-medium"
+                  style={{ color: theme.text }}
+                >
+                  Targeting Criteria
+                </h3>
+
+                {/* Target Markets */}
+                <div className="space-y-3">
+                  <Label style={{ color: theme.text }}>Target Markets</Label>
+                  <div className="relative">
+                    <Input
+                      placeholder="Type and press Enter to add..."
+                      value={currentInput.targetMarket}
+                      onChange={(e) =>
                         setCurrentInput((prev) => ({
                           ...prev,
-                          targetMarket: "",
-                        }));
+                          targetMarket: e.target.value,
+                        }))
                       }
-                    }}
-                    style={{
-                      borderColor: theme.primaryBorder,
-                      color: theme.text,
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      addToMandateArray(
-                        "targetMarkets",
-                        currentInput.targetMarket
-                      );
-                      setCurrentInput((prev) => ({
-                        ...prev,
-                        targetMarket: "",
-                      }));
-                    }}
-                    style={{
-                      borderColor: theme.primary,
-                      color: theme.primary,
-                      backgroundColor: "transparent",
-                    }}
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {mandate.dna.targetMarkets?.map((market, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="px-3 py-1"
-                      style={{
-                        backgroundColor: theme.primaryLight,
-                        color: theme.primary,
-                        border: `1px solid ${theme.primaryBorder}`,
-                      }}
-                    >
-                      {market}
-                      <X
-                        className="ml-2 h-3 w-3 cursor-pointer"
-                        onClick={() =>
-                          removeFromMandateArray("targetMarkets", index)
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (currentInput.targetMarket.trim()) {
+                            addToMandateArray(
+                              "targetMarkets",
+                              currentInput.targetMarket
+                            );
+                            setCurrentInput((prev) => ({
+                              ...prev,
+                              targetMarket: "",
+                            }));
+                          }
                         }
-                      />
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              {/* Industry Focus */}
-              <div>
-                <Label style={{ color: theme.text }}>Industry Focus</Label>
-                <div className="flex gap-2 mb-2">
-                  <Input
-                    placeholder="Add industry..."
-                    value={currentInput.industry}
-                    onChange={(e) =>
-                      setCurrentInput((prev) => ({
-                        ...prev,
-                        industry: e.target.value,
-                      }))
-                    }
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addToMandateArray(
-                          "industryFocus",
-                          currentInput.industry
-                        );
-                        setCurrentInput((prev) => ({ ...prev, industry: "" }));
-                      }
-                    }}
-                    style={{
-                      borderColor: theme.primaryBorder,
-                      color: theme.text,
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      addToMandateArray("industryFocus", currentInput.industry);
-                      setCurrentInput((prev) => ({ ...prev, industry: "" }));
-                    }}
-                    style={{
-                      borderColor: theme.primary,
-                      color: theme.primary,
-                      backgroundColor: "transparent",
-                    }}
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {mandate.dna.industryFocus?.map((industry, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="px-3 py-1"
-                      style={{
-                        backgroundColor: theme.primaryLight,
-                        color: theme.primary,
-                        border: `1px solid ${theme.primaryBorder}`,
                       }}
-                    >
-                      {industry}
-                      <X
-                        className="ml-2 h-3 w-3 cursor-pointer"
-                        onClick={() =>
-                          removeFromMandateArray("industryFocus", index)
+                      className="pr-12"
+                      style={{
+                        borderColor: theme.primaryBorder,
+                        color: theme.text,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (currentInput.targetMarket.trim()) {
+                          addToMandateArray(
+                            "targetMarkets",
+                            currentInput.targetMarket
+                          );
+                          setCurrentInput((prev) => ({
+                            ...prev,
+                            targetMarket: "",
+                          }));
                         }
-                      />
-                    </Badge>
-                  ))}
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                      style={{ color: theme.primary }}
+                    >
+                      <PlusCircle className="h-5 w-5" />
+                    </button>
+                  </div>
+                  {mandate.dna.targetMarkets &&
+                    mandate.dna.targetMarkets.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {mandate.dna.targetMarkets.map((market, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="px-3 py-1.5 text-sm flex items-center gap-2"
+                            style={{
+                              backgroundColor: theme.primaryLight,
+                              color: theme.primary,
+                              border: `1px solid ${theme.primaryBorder}`,
+                            }}
+                          >
+                            <span>{market}</span>
+                            <X
+                              className="h-3.5 w-3.5 cursor-pointer hover:opacity-70 transition-opacity"
+                              onClick={() =>
+                                removeFromMandateArray("targetMarkets", index)
+                              }
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                 </div>
-              </div>
 
-              {/* Company Size */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label
-                    htmlFor="company-size-min"
-                    style={{ color: theme.text }}
-                  >
-                    Min Employees
-                  </Label>
-                  <Input
-                    id="company-size-min"
-                    type="number"
-                    placeholder="e.g., 50"
-                    value={mandate.dna.companySize?.min || ""}
-                    onChange={(e) =>
-                      setMandate((prev) => ({
-                        ...prev,
-                        dna: {
-                          ...prev.dna,
-                          companySize: {
-                            ...prev.dna.companySize,
-                            min: parseInt(e.target.value) || undefined,
-                          },
-                        },
-                      }))
-                    }
-                    style={{
-                      borderColor: theme.primaryBorder,
-                      color: theme.text,
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor="company-size-max"
-                    style={{ color: theme.text }}
-                  >
-                    Max Employees
-                  </Label>
-                  <Input
-                    id="company-size-max"
-                    type="number"
-                    placeholder="e.g., 5000"
-                    value={mandate.dna.companySize?.max || ""}
-                    onChange={(e) =>
-                      setMandate((prev) => ({
-                        ...prev,
-                        dna: {
-                          ...prev.dna,
-                          companySize: {
-                            ...prev.dna.companySize,
-                            max: parseInt(e.target.value) || undefined,
-                          },
-                        },
-                      }))
-                    }
-                    style={{
-                      borderColor: theme.primaryBorder,
-                      color: theme.text,
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Revenue Range */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="revenue-min" style={{ color: theme.text }}>
-                    Min Revenue (USD)
-                  </Label>
-                  <Input
-                    id="revenue-min"
-                    type="number"
-                    placeholder="e.g., 1000000"
-                    value={mandate.dna.revenueRange?.min || ""}
-                    onChange={(e) =>
-                      setMandate((prev) => ({
-                        ...prev,
-                        dna: {
-                          ...prev.dna,
-                          revenueRange: {
-                            ...prev.dna.revenueRange,
-                            min: parseInt(e.target.value) || undefined,
-                          },
-                        },
-                      }))
-                    }
-                    style={{
-                      borderColor: theme.primaryBorder,
-                      color: theme.text,
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="revenue-max" style={{ color: theme.text }}>
-                    Max Revenue (USD)
-                  </Label>
-                  <Input
-                    id="revenue-max"
-                    type="number"
-                    placeholder="e.g., 100000000"
-                    value={mandate.dna.revenueRange?.max || ""}
-                    onChange={(e) =>
-                      setMandate((prev) => ({
-                        ...prev,
-                        dna: {
-                          ...prev.dna,
-                          revenueRange: {
-                            ...prev.dna.revenueRange,
-                            max: parseInt(e.target.value) || undefined,
-                          },
-                        },
-                      }))
-                    }
-                    style={{
-                      borderColor: theme.primaryBorder,
-                      color: theme.text,
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Geographic Focus */}
-              <div>
-                <Label style={{ color: theme.text }}>Geographic Focus</Label>
-                <div className="flex gap-2 mb-2">
-                  <Input
-                    placeholder="Add country or region..."
-                    value={currentInput.geographic}
-                    onChange={(e) =>
-                      setCurrentInput((prev) => ({
-                        ...prev,
-                        geographic: e.target.value,
-                      }))
-                    }
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addToMandateArray(
-                          "geographicFocus",
-                          currentInput.geographic
-                        );
+                {/* Industry Focus */}
+                <div className="space-y-3">
+                  <Label style={{ color: theme.text }}>Industry Focus</Label>
+                  <div className="relative">
+                    <Input
+                      placeholder="Type and press Enter to add..."
+                      value={currentInput.industry}
+                      onChange={(e) =>
                         setCurrentInput((prev) => ({
                           ...prev,
-                          geographic: "",
-                        }));
+                          industry: e.target.value,
+                        }))
                       }
-                    }}
-                    style={{
-                      borderColor: theme.primaryBorder,
-                      color: theme.text,
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      addToMandateArray(
-                        "geographicFocus",
-                        currentInput.geographic
-                      );
-                      setCurrentInput((prev) => ({ ...prev, geographic: "" }));
-                    }}
-                    style={{
-                      borderColor: theme.primary,
-                      color: theme.primary,
-                      backgroundColor: "transparent",
-                    }}
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {mandate.dna.geographicFocus?.map((geo, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="px-3 py-1"
-                      style={{
-                        backgroundColor: theme.primaryLight,
-                        color: theme.primary,
-                        border: `1px solid ${theme.primaryBorder}`,
-                      }}
-                    >
-                      {geo}
-                      <X
-                        className="ml-2 h-3 w-3 cursor-pointer"
-                        onClick={() =>
-                          removeFromMandateArray("geographicFocus", index)
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (currentInput.industry.trim()) {
+                            addToMandateArray(
+                              "industryFocus",
+                              currentInput.industry
+                            );
+                            setCurrentInput((prev) => ({
+                              ...prev,
+                              industry: "",
+                            }));
+                          }
                         }
-                      />
-                    </Badge>
-                  ))}
+                      }}
+                      className="pr-12"
+                      style={{
+                        borderColor: theme.primaryBorder,
+                        color: theme.text,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (currentInput.industry.trim()) {
+                          addToMandateArray(
+                            "industryFocus",
+                            currentInput.industry
+                          );
+                          setCurrentInput((prev) => ({
+                            ...prev,
+                            industry: "",
+                          }));
+                        }
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                      style={{ color: theme.primary }}
+                    >
+                      <PlusCircle className="h-5 w-5" />
+                    </button>
+                  </div>
+                  {mandate.dna.industryFocus &&
+                    mandate.dna.industryFocus.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {mandate.dna.industryFocus.map((industry, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="px-3 py-1.5 text-sm flex items-center gap-2"
+                            style={{
+                              backgroundColor: theme.primaryLight,
+                              color: theme.primary,
+                              border: `1px solid ${theme.primaryBorder}`,
+                            }}
+                          >
+                            <span>{industry}</span>
+                            <X
+                              className="h-3.5 w-3.5 cursor-pointer hover:opacity-70 transition-opacity"
+                              onClick={() =>
+                                removeFromMandateArray("industryFocus", index)
+                              }
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                </div>
+
+                {/* Geographic Focus */}
+                <div className="space-y-3">
+                  <Label style={{ color: theme.text }}>Geographic Focus</Label>
+                  <div className="relative">
+                    <Input
+                      placeholder="Type and press Enter to add..."
+                      value={currentInput.geographic}
+                      onChange={(e) =>
+                        setCurrentInput((prev) => ({
+                          ...prev,
+                          geographic: e.target.value,
+                        }))
+                      }
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (currentInput.geographic.trim()) {
+                            addToMandateArray(
+                              "geographicFocus",
+                              currentInput.geographic
+                            );
+                            setCurrentInput((prev) => ({
+                              ...prev,
+                              geographic: "",
+                            }));
+                          }
+                        }
+                      }}
+                      className="pr-12"
+                      style={{
+                        borderColor: theme.primaryBorder,
+                        color: theme.text,
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (currentInput.geographic.trim()) {
+                          addToMandateArray(
+                            "geographicFocus",
+                            currentInput.geographic
+                          );
+                          setCurrentInput((prev) => ({
+                            ...prev,
+                            geographic: "",
+                          }));
+                        }
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                      style={{ color: theme.primary }}
+                    >
+                      <PlusCircle className="h-5 w-5" />
+                    </button>
+                  </div>
+                  {mandate.dna.geographicFocus &&
+                    mandate.dna.geographicFocus.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {mandate.dna.geographicFocus.map((geo, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="px-3 py-1.5 text-sm flex items-center gap-2"
+                            style={{
+                              backgroundColor: theme.primaryLight,
+                              color: theme.primary,
+                              border: `1px solid ${theme.primaryBorder}`,
+                            }}
+                          >
+                            <span>{geo}</span>
+                            <X
+                              className="h-3.5 w-3.5 cursor-pointer hover:opacity-70 transition-opacity"
+                              onClick={() =>
+                                removeFromMandateArray("geographicFocus", index)
+                              }
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                 </div>
               </div>
 
+              {/* Divider */}
+              <div
+                className="border-t"
+                style={{ borderColor: theme.primaryBorder }}
+              />
+
+              {/* Company Metrics Section */}
+              <div className="space-y-5">
+                <h3
+                  className="text-sm font-medium"
+                  style={{ color: theme.text }}
+                >
+                  Company Metrics
+                </h3>
+
+                {/* Company Size */}
+                <div className="space-y-3">
+                  <Label style={{ color: theme.text }}>
+                    Company Size (Employees)
+                  </Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-xs text-muted-foreground mb-1 block">
+                        Minimum
+                      </span>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 50"
+                        value={mandate.dna.companySize?.min || ""}
+                        onChange={(e) =>
+                          setMandate((prev) => ({
+                            ...prev,
+                            dna: {
+                              ...prev.dna,
+                              companySize: {
+                                ...prev.dna.companySize,
+                                min: parseInt(e.target.value) || undefined,
+                              },
+                            },
+                          }))
+                        }
+                        style={{
+                          borderColor: theme.primaryBorder,
+                          color: theme.text,
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground mb-1 block">
+                        Maximum
+                      </span>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 5000"
+                        value={mandate.dna.companySize?.max || ""}
+                        onChange={(e) =>
+                          setMandate((prev) => ({
+                            ...prev,
+                            dna: {
+                              ...prev.dna,
+                              companySize: {
+                                ...prev.dna.companySize,
+                                max: parseInt(e.target.value) || undefined,
+                              },
+                            },
+                          }))
+                        }
+                        style={{
+                          borderColor: theme.primaryBorder,
+                          color: theme.text,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Revenue Range */}
+                <div className="space-y-3">
+                  <Label style={{ color: theme.text }}>
+                    Revenue Range (USD)
+                  </Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-xs text-muted-foreground mb-1 block">
+                        Minimum
+                      </span>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 1,000,000"
+                        value={mandate.dna.revenueRange?.min || ""}
+                        onChange={(e) =>
+                          setMandate((prev) => ({
+                            ...prev,
+                            dna: {
+                              ...prev.dna,
+                              revenueRange: {
+                                ...prev.dna.revenueRange,
+                                min: parseInt(e.target.value) || undefined,
+                              },
+                            },
+                          }))
+                        }
+                        style={{
+                          borderColor: theme.primaryBorder,
+                          color: theme.text,
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground mb-1 block">
+                        Maximum
+                      </span>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 100,000,000"
+                        value={mandate.dna.revenueRange?.max || ""}
+                        onChange={(e) =>
+                          setMandate((prev) => ({
+                            ...prev,
+                            dna: {
+                              ...prev.dna,
+                              revenueRange: {
+                                ...prev.dna.revenueRange,
+                                max: parseInt(e.target.value) || undefined,
+                              },
+                            },
+                          }))
+                        }
+                        style={{
+                          borderColor: theme.primaryBorder,
+                          color: theme.text,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div
+                className="border-t"
+                style={{ borderColor: theme.primaryBorder }}
+              />
+
+              {/* Submit Button */}
               <Button
                 onClick={saveMandate}
                 disabled={saving || !mandate.name}
-                className="w-full"
+                className="w-full h-11"
                 style={{
-                  backgroundColor: theme.primary,
-                  color: "white",
-                  opacity: saving || !mandate.name ? 0.6 : 1,
+                  backgroundColor:
+                    saving || !mandate.name
+                      ? theme.primaryLight
+                      : theme.primary,
+                  color: saving || !mandate.name ? theme.primary : "white",
+                  cursor: saving || !mandate.name ? "not-allowed" : "pointer",
                 }}
               >
-                <Save className="mr-2 h-4 w-4" />
-                {saving ? "Saving..." : "Save Mandate"}
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Mandate
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
-
         {/* DNA Segment Creation Tab */}
         <TabsContent value="dna">
           <Card style={{ borderColor: theme.primaryBorder }}>

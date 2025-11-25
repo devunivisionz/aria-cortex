@@ -15,6 +15,7 @@ import { LoginPage } from "./pages/Authentication/Login/Login";
 import OTPinput from "./pages/Authentication/OTPinput/OTPinput";
 import HomepageOld from "./pages/HomepageOld/HomepageOld";
 import AIAssistantAdvanced from "./components/AiAssistant/AiAssistant";
+import MainDna from "./pages/DNA/MainDna";
 // import "./index.css";
 
 // Protected Route Component
@@ -168,9 +169,11 @@ export default function App() {
               path="/dna"
               element={
                 <ProtectedRoute>
-                  <DnaWizard
+                  {/* <DnaWizard
                     onDone={() => (window.location.href = "/targets")}
-                  />
+                  /> */}
+
+                  <MainDna />
                 </ProtectedRoute>
               }
             />

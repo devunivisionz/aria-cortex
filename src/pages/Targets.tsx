@@ -208,6 +208,7 @@ export default function Targets() {
       if (industryFilter) params.append("industry", industryFilter);
       if (debouncedSearch.trim())
         params.append("search", debouncedSearch.trim());
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
       const functionUrl = `https://zhmalcapsmcvvhyrcicm.supabase.co/functions/v1/companies?${params.toString()}`;
 
@@ -215,6 +216,8 @@ export default function Targets() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          Authorization: "Bearer " + anonKey,
+          apiKey: anonKey,
         },
         signal: abortControllerRef.current.signal,
       });
