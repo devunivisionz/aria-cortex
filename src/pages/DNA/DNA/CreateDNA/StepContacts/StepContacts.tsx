@@ -21,13 +21,11 @@ export default function StepContacts({
   jobRoles,
 }: StepContactsProps) {
   const toggleRole = (title: string) => {
-    if (formData.contact_roles.includes(title)) {
-      onChange({
-        contact_roles: formData.contact_roles.filter((r) => r !== title),
-      });
-    } else {
-      onChange({ contact_roles: [...formData.contact_roles, title] });
-    }
+    const updated = formData.contact_roles.includes(title)
+      ? formData.contact_roles.filter((r) => r !== title)
+      : [...formData.contact_roles, title];
+
+    onChange({ contact_roles: updated });
   };
 
   const updateEmailPolicy = (
@@ -53,49 +51,48 @@ export default function StepContacts({
   const seniorityOrder = ["C-Level", "VP", "Director", "Manager", "Other"];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 text-lg font-medium text-gray-900">
+    <div className="space-y-6 bg-gray-900 p-6 rounded-lg">
+      <div className="flex items-center gap-2 text-lg font-medium text-white">
         <span>👤</span>
         Contact Criteria
       </div>
 
       {/* Job Roles */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          Target Job Roles <span className="text-red-500">*</span>
+        <label className="block text-sm font-medium text-white mb-3">
+          Target Job Roles <span className="text-red-400">*</span>
         </label>
 
-        <div className="space-y-4 max-h-60 overflow-y-auto">
+        <div className="space-y-4 max-h-60 overflow-y-auto p-3 bg-gray-800 border border-gray-700 rounded-lg">
           {seniorityOrder.map((level) => {
             const roles = groupedRoles[level];
-            if (!roles || roles.length === 0) return null;
+            if (!roles?.length) return null;
 
             return (
               <div key={level}>
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                <div className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
                   {level}
                 </div>
+
                 <div className="grid grid-cols-2 gap-2">
-                  {roles.map((role) => (
-                    <label
-                      key={role.id}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.contact_roles.includes(
-                          role.short_title || role.title
-                        )}
-                        onChange={() =>
-                          toggleRole(role.short_title || role.title)
-                        }
-                        className="rounded text-blue-600"
-                      />
-                      <span className="text-sm text-gray-700">
-                        {role.short_title || role.title}
-                      </span>
-                    </label>
-                  ))}
+                  {roles.map((role) => {
+                    const label = role.short_title || role.title;
+
+                    return (
+                      <label
+                        key={role.id}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.contact_roles.includes(label)}
+                          onChange={() => toggleRole(label)}
+                          className="rounded text-emerald-500 bg-gray-700 border-gray-600"
+                        />
+                        <span className="text-sm text-gray-200">{label}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -103,18 +100,18 @@ export default function StepContacts({
         </div>
 
         {formData.contact_roles.length > 0 && (
-          <div className="mt-3 text-sm text-gray-500">
+          <div className="mt-3 text-sm text-gray-400">
             {formData.contact_roles.length} role
             {formData.contact_roles.length !== 1 ? "s" : ""} selected
           </div>
         )}
       </div>
 
-      <hr className="border-gray-200" />
+      <hr className="border-gray-700" />
 
       {/* Email Policy */}
       <div>
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-white mb-3">
           <span>📧</span>
           Email Policy
         </div>
@@ -127,9 +124,9 @@ export default function StepContacts({
               onChange={(e) =>
                 updateEmailPolicy("require_verified", e.target.checked)
               }
-              className="rounded text-blue-600"
+              className="rounded text-emerald-500 bg-gray-700 border-gray-600"
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-200">
               Require verified emails only
             </span>
           </label>
@@ -141,9 +138,9 @@ export default function StepContacts({
               onChange={(e) =>
                 updateEmailPolicy("allow_generic", e.target.checked)
               }
-              className="rounded text-blue-600"
+              className="rounded text-emerald-500 bg-gray-700 border-gray-600"
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-200">
               Allow generic emails (info@, contact@)
             </span>
           </label>
@@ -155,15 +152,15 @@ export default function StepContacts({
               onChange={(e) =>
                 updateEmailPolicy("allow_catchall", e.target.checked)
               }
-              className="rounded text-blue-600"
+              className="rounded text-emerald-500 bg-gray-700 border-gray-600"
             />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-200">
               Allow catch-all domains
             </span>
           </label>
 
           <div className="flex items-center gap-3 mt-4">
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-200">
               Max contacts per company:
             </span>
             <select
@@ -171,7 +168,7 @@ export default function StepContacts({
               onChange={(e) =>
                 updateEmailPolicy("max_per_company", Number(e.target.value))
               }
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             >
               {[1, 2, 3, 4, 5, 10, 15, 20].map((n) => (
                 <option key={n} value={n}>

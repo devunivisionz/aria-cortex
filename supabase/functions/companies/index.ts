@@ -2,33 +2,22 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT, DELETE",
   "Access-Control-Allow-Credentials": "true",
+  Authorization: "Bearer " + Deno.env.get("SUPABASE_ANON_KEY"),
+  apiKey: Deno.env.get("SUPABASE_ANON_KEY"),
 };
-
-// Response headers including the anon key
-const getResponseHeaders = () => ({
-  ...corsHeaders,
-  "Content-Type": "application/json",
-  "x-supabase-anon-key": supabaseAnonKey, // Custom header for anon key
-  apikey: supabaseAnonKey, // Standard Supabase apikey header
-});
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
-      headers: {
-        ...corsHeaders,
-        "Access-Control-Expose-Headers": "x-supabase-anon-key, apikey", // Expose custom headers to client
-      },
+      headers: corsHeaders,
     });
   }
 
@@ -62,7 +51,10 @@ serve(async (req) => {
     if (req.method !== "GET") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
-        headers: getResponseHeaders(),
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
       });
     }
 
@@ -106,7 +98,7 @@ serve(async (req) => {
       throw error;
     }
 
-    // Return successful response with anon key in headers
+    // Return successful response
     return new Response(
       JSON.stringify({
         data: data || [],
@@ -117,7 +109,10 @@ serve(async (req) => {
       }),
       {
         status: 200,
-        headers: getResponseHeaders(),
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
       }
     );
   } catch (error) {
@@ -132,7 +127,10 @@ serve(async (req) => {
       }),
       {
         status: 500,
-        headers: getResponseHeaders(),
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
       }
     );
   }
