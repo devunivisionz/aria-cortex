@@ -41,7 +41,7 @@ export default function CreateDNAModal({
   const [error, setError] = useState<string | null>(null);
 
   const { lookups, loading: lookupsLoading } = useLookups();
-
+  console.log(formData, "lookups");
   const updateFormData = (updates: Partial<DNASegmentFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
   };
@@ -67,33 +67,49 @@ export default function CreateDNAModal({
         data: { user },
       } = await supabase.auth.getUser();
 
-      const { error: insertError } = await supabase
-        .from("dna_segments")
-        .insert({
-          mandate_id: mandateId,
-          organization_id: user?.user_metadata?.organization_id,
-          created_by: user?.id,
-          name: formData.name,
-          description: formData.description || null,
-          status: formData.status,
-          geo_allow: formData.geo_allow,
-          geo_block: formData.geo_block,
-          industry_allow: formData.industry_allow,
-          size_employees_min: formData.size_employees_min,
-          size_employees_max: formData.size_employees_max,
-          revenue_min: formData.revenue_min,
-          revenue_max: formData.revenue_max,
-          excluded_keywords: formData.excluded_keywords,
-          contact_roles: formData.contact_roles,
-          email_policy: formData.email_policy,
-        });
+      // Call your Edge Function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-dna-segment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            organization_id: formData.organization_id,
+            name: formData.name,
+            description: formData.description || null,
 
-      if (insertError) throw insertError;
+            // Geography
+            geo_allow: formData.geo_allow,
+            geo_block: formData.geo_block,
+
+            // Company criteria
+            industry_allow: formData.industry_allow,
+            size_employees_min: formData.size_employees_min,
+            size_employees_max: formData.size_employees_max,
+            revenue_min: formData.revenue_min,
+            revenue_max: formData.revenue_max,
+            excluded_keywords: formData.excluded_keywords,
+
+            // Contacts
+            contact_roles: formData.contact_roles,
+            email_policy: formData.email_policy,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!data.success)
+        throw new Error(data.message || "Failed to create DNA");
 
       // Reset form
       setFormData(initialDNAFormData);
       setCurrentStep(1);
       onSuccess();
+      alert(data.message); // Optional: show success
     } catch (err: any) {
       setError(err.message || "Failed to create DNA segment");
     } finally {
