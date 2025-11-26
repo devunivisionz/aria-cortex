@@ -65,11 +65,7 @@ export function useLookups(): UseLookups {
           .order("sort_order", { ascending: true })
           .order("name", { ascending: true }),
 
-        supabase
-          .from("lookup_industries")
-          .select("*")
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true }),
+        supabase.from("companies").select("*"),
 
         supabase
           .from("lookup_company_sizes")

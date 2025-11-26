@@ -49,14 +49,16 @@ serve(async (req) => {
     });
 
     // 1️⃣ Insert mandate with minimal fields - NO .select()
-    const { data, error: mandateErr } = await supabase.from("mandates").insert({
-      id: mandateId,
-      organization_id: org_id,
-      name,
-      description: description || null,
-      dna: dna || {},
-      created_by: userId,
-    });
+    const { data, error: mandateErr } = await supabase
+      .from("users_mandates")
+      .insert({
+        id: mandateId,
+        organization_id: org_id,
+        name,
+        description: description || null,
+        dna: dna || {},
+        created_by: userId,
+      });
     // ❌ DO NOT ADD .select() here - this causes the relationship lookup
 
     if (mandateErr) {
@@ -70,19 +72,19 @@ serve(async (req) => {
     console.log("Mandate inserted successfully");
 
     // 2️⃣ Create mandate filters if provided
-    if (filters !== undefined) {
-      const { error: filterErr } = await supabase
-        .from("mandate_filters")
-        .insert({
-          mandate_id: mandateId,
-          filters: filters ?? {},
-        });
+    // if (filters !== undefined) {
+    //   const { error: filterErr } = await supabase
+    //     .from("mandate_filters")
+    //     .insert({
+    //       mandate_id: mandateId,
+    //       filters: filters ?? {},
+    //     });
 
-      if (filterErr) {
-        console.error("Filter error:", filterErr);
-        // Continue even if filters fail
-      }
-    }
+    //   if (filterErr) {
+    //     console.error("Filter error:", filterErr);
+    //     // Continue even if filters fail
+    //   }
+    // }
 
     return new Response(
       JSON.stringify({
