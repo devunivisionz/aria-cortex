@@ -1,36 +1,96 @@
 // pages/mandates/index.tsx
 import { useState } from "react";
-// import { useRouter } from "next/router";
 import { useMandates } from "../../../utils/useMandate";
 import MandateCard from "../../../components/MandateComponents/MandateCard";
 import MandateFilters from "../../../components/MandateComponents/MandateFilters";
 import Pagination from "../../../components/MandateComponents/Pagination";
+import Toaster from "../../../components/Toaster/Toaster";
 import { Plus } from "lucide-react";
 import CreateMandateModal from "./CreateMandate/CreateMandate";
+import { format } from "date-fns";
 
 export default function MandateListPage() {
-  //   const router = useRouter();
   const [filters, setFilters] = useState({
     search: "",
-    status: "all" as const,
     sortBy: "created_at" as const,
     sortOrder: "desc" as const,
   });
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const { mandates, total, loading, error } = useMandates({
+  const { mandates, total, loading, error, refetch } = useMandates({
     ...filters,
     page,
     pageSize,
   });
+
   const [openModel, setOpenModel] = useState(false);
+
+  // Toast state
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    variant: "success" | "error" | "info" | "warning";
+  }>({
+    show: false,
+    message: "",
+    variant: "success",
+  });
+
+  // Handle successful mandate creation
+  const handleMandateSuccess = (mandate: any) => {
+    setToast({
+      show: true,
+      message: "Mandate created successfully!",
+      variant: "success",
+    });
+    // Refetch mandates to show the new one
+    if (refetch) {
+      refetch();
+    }
+  };
+
+  // Handle mandate creation error
+  const handleMandateError = (errorMessage: string) => {
+    setToast({
+      show: true,
+      message: errorMessage || "Failed to create mandate",
+      variant: "error",
+    });
+  };
+
+  // Close toast
+  const handleCloseToast = () => {
+    setToast((prev) => ({ ...prev, show: false }));
+  };
+
+  // Format dates for display
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "MMM dd, yyyy HH:mm");
+    } catch (e) {
+      return "Invalid Date";
+    }
+  };
+  console.log(mandates, "mandates");
   return (
     <div className="min-h-screen bg-black">
+      {/* Toaster - rendered at parent level so it persists after modal closes */}
+      <Toaster
+        msg={toast.message}
+        variant={toast.variant}
+        show={toast.show}
+        onClose={handleCloseToast}
+      />
+
+      {/* Create Mandate Modal */}
       <CreateMandateModal
         isOpen={openModel}
         onClose={() => setOpenModel(false)}
+        onSuccess={handleMandateSuccess}
+        onError={handleMandateError}
       />
+
       {/* Header */}
       <div className="bg-black border-b border-emerald-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,7 +115,6 @@ export default function MandateListPage() {
             </p>
           </div>
           <button
-            // onClick={() => router.push("/mandates/create")}
             onClick={() => setOpenModel(true)}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
           >
@@ -92,7 +151,7 @@ export default function MandateListPage() {
               Create your first mandate to start targeting leads
             </p>
             <button
-              //   onClick={() => setOpenModel(true)}
+              onClick={() => setOpenModel(true)}
               className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
             >
               <Plus size={20} />
@@ -108,7 +167,10 @@ export default function MandateListPage() {
               <MandateCard
                 key={mandate.id}
                 mandate={mandate}
-                // onClick={() => router.push(`/mandates/${mandate.id}`)}
+                onClick={() => {
+                  // Handle click - e.g., navigate to mandate detail
+                  console.log("Clicked mandate:", mandate.id);
+                }}
               />
             ))}
           </div>

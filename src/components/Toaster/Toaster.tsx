@@ -1,19 +1,18 @@
+// components/Toaster/Toaster.tsx
 import React, { useEffect, useState } from "react";
+import { X, CheckCircle, AlertTriangle, Info as InfoIcon } from "lucide-react";
 
 type Position = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
 type ToasterProps = {
   msg: string;
-  error?: boolean; // shorthand: true = error, false = success/info
-  variant?: "success" | "error" | "info" | "warning"; // optional named variants
-  duration?: number; // ms before auto-dismiss (0 = sticky)
+  error?: boolean;
+  variant?: "success" | "error" | "info" | "warning";
+  duration?: number;
   position?: Position;
-  show?: boolean; // control visibility from parent
-  onClose?: () => void; // callback when toast is dismissed
+  show?: boolean;
+  onClose?: () => void;
 };
-
-// Default icon set using lucide-react (available in many projects). You can replace with your own icons.
-import { X, CheckCircle, AlertTriangle, Info as InfoIcon } from "lucide-react";
 
 export default function Toaster({
   msg,
@@ -26,16 +25,20 @@ export default function Toaster({
 }: ToasterProps) {
   const [visible, setVisible] = useState(propShow);
 
+  // Sync with prop changes
   useEffect(() => {
     setVisible(propShow);
   }, [propShow]);
 
+  // Auto-dismiss timer
   useEffect(() => {
-    if (!visible) return;
-    if (duration > 0) {
-      const t = setTimeout(() => handleClose(), duration);
-      return () => clearTimeout(t);
-    }
+    if (!visible || duration === 0) return;
+
+    const timer = setTimeout(() => {
+      handleClose();
+    }, duration);
+
+    return () => clearTimeout(timer);
   }, [visible, duration]);
 
   function handleClose() {
@@ -71,7 +74,7 @@ export default function Toaster({
   return (
     <div
       aria-live="polite"
-      className={`fixed z-50 ${posClass} flex items-start max-w-xs`}
+      className={`fixed z-[100] ${posClass} flex items-start max-w-xs`}
     >
       <div
         role="status"

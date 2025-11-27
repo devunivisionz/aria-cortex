@@ -1,5 +1,5 @@
 // components/CreateMandateModal.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../../lib/supabase";
 import {
   X,
@@ -39,7 +39,7 @@ interface DNASegment {
 interface MandateDNA {
   geo_allow: string[];
   geo_block: string[];
-  segments: string[]; // Array of selected dna_segment IDs
+  segments: string[];
   industry_allow: string[];
   size_employees_min: number | null;
   size_employees_max: number | null;
@@ -79,24 +79,13 @@ interface CreateMandateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (mandate: MandateRecord) => void;
+  onError?: (message: string) => void;
 }
 
 const STEPS = [
   { id: 1, title: "Basic Info", icon: "📋" },
   { id: 2, title: "Geography", icon: "🌍" },
   { id: 3, title: "DNA Segments", icon: "🧬" },
-];
-
-// Config fields to display in preview
-const PREVIEW_FIELDS: { key: keyof DNASegment; label: string }[] = [
-  { key: "industry_allow", label: "Industries" },
-  { key: "contact_roles", label: "Roles" },
-  { key: "geo_allow", label: "Regions" },
-  { key: "size_employees_min", label: "Min Employees" },
-  { key: "size_employees_max", label: "Max Employees" },
-  { key: "revenue_min", label: "Min Revenue" },
-  { key: "revenue_max", label: "Max Revenue" },
-  { key: "excluded_keywords", label: "Excluded" },
 ];
 
 const DEFAULT_EMAIL_POLICY = {
@@ -130,6 +119,7 @@ export default function CreateMandateModal({
   isOpen,
   onClose,
   onSuccess,
+  onError,
 }: CreateMandateModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,7 +150,6 @@ export default function CreateMandateModal({
 
       const organizationId = user?.user_metadata?.organization_id;
 
-      // Fetch all segments - filter in JS since organization_id is an array
       const { data, error } = await supabase
         .from("dna_segments")
         .select("*")
@@ -168,19 +157,18 @@ export default function CreateMandateModal({
 
       if (error) throw error;
 
-      // Filter segments: include if organization_id is null/empty or includes user's org
       const filteredData = (data || []).filter((segment) => {
         if (!segment.organization_id || segment.organization_id.length === 0) {
-          return true; // Global segment
+          return true;
         }
         if (segment.organization_id.includes(null)) {
-          return true; // Global segment (null in array)
+          return true;
         }
         if (
           organizationId &&
           segment.organization_id.includes(organizationId)
         ) {
-          return true; // Org-specific segment
+          return true;
         }
         return false;
       });
@@ -201,17 +189,9 @@ export default function CreateMandateModal({
     try {
       const {
         data: { user },
-        error: authError,
       } = await supabase.auth.getUser();
-      console.log(user, "user");
-      // if (authError) throw new Error("Authentication error");
-      // if (!user) throw new Error("User not authenticated");
-
-      // const organizationId = user.user_metadata?.organization_id;
-      // if (!organizationId) throw new Error("Organization ID not found");
 
       const mergedDNA = mergeDNAWithSegments(form.dna, dnaSegments);
-      // Merge selected segment configs into DNA
 
       const { data, error: insertError } = await supabase
         .from("mandates")
@@ -219,27 +199,31 @@ export default function CreateMandateModal({
           name: form.name.trim(),
           description: form.description.trim() || null,
           organization_id: mergedDNA?.segments,
-          // created_by: user.id,
-
-          // organization_id: organizationId,
         })
         .select()
         .single();
 
       if (insertError) throw insertError;
 
-      onSuccess?.(data as MandateRecord);
+      // Close modal and reset form first
       onClose();
       resetForm();
+
+      // Then trigger success callback (parent will show toast)
+      onSuccess?.(data as MandateRecord);
     } catch (err) {
       console.error("Error creating mandate:", err);
-      setError(err instanceof Error ? err.message : "Failed to create mandate");
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to create mandate";
+      setError(errorMessage);
+
+      // Trigger error callback (parent will show toast)
+      onError?.(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // Merge DNA with selected segment configurations
   const mergeDNAWithSegments = (
     dna: MandateDNA,
     segments: DNASegment[]
@@ -258,7 +242,6 @@ export default function CreateMandateModal({
     };
 
     selectedSegments.forEach((segment) => {
-      // Merge arrays
       if (segment.industry_allow?.length) {
         mergedDNA.industry_allow = [
           ...mergedDNA.industry_allow,
@@ -284,7 +267,6 @@ export default function CreateMandateModal({
         mergedDNA.geo_block = [...mergedDNA.geo_block, ...segment.geo_block];
       }
 
-      // Merge numeric values (take the most restrictive)
       if (segment.size_employees_min !== null) {
         mergedDNA.size_employees_min =
           mergedDNA.size_employees_min !== null
@@ -310,7 +292,6 @@ export default function CreateMandateModal({
             : segment.revenue_max;
       }
 
-      // Merge email policy (more restrictive wins)
       if (segment.email_policy) {
         mergedDNA.email_policy = {
           allow_generic:
@@ -330,7 +311,6 @@ export default function CreateMandateModal({
       }
     });
 
-    // Remove duplicates from arrays
     mergedDNA.industry_allow = [...new Set(mergedDNA.industry_allow)];
     mergedDNA.contact_roles = [...new Set(mergedDNA.contact_roles)];
     mergedDNA.excluded_keywords = [...new Set(mergedDNA.excluded_keywords)];
@@ -395,7 +375,6 @@ export default function CreateMandateModal({
     return true;
   };
 
-  // Get preview items for a segment
   const getSegmentPreview = (segment: DNASegment) => {
     const items: { label: string; value: string }[] = [];
 
@@ -462,7 +441,6 @@ export default function CreateMandateModal({
     return items;
   };
 
-  // Format currency for display
   const formatCurrency = (value: number): string => {
     if (value >= 1000000) {
       return `$${(value / 1000000).toFixed(1)}M`;
@@ -473,7 +451,6 @@ export default function CreateMandateModal({
     return `$${value}`;
   };
 
-  // Filter segments by search query
   const filteredSegments = dnaSegments.filter((segment) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
@@ -871,17 +848,32 @@ function TagInput({
   placeholder: string;
 }) {
   const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      onAdd(input);
-      setInput("");
+      if (input.trim()) {
+        onAdd(input.trim());
+        setInput("");
+      }
+    }
+    // Optional: Remove last tag with backspace when input is empty
+    if (e.key === "Backspace" && !input && tags.length > 0) {
+      onRemove(tags.length - 1);
     }
   };
 
+  // Focus input when clicking anywhere in the container
+  const handleContainerClick = () => {
+    inputRef.current?.focus();
+  };
+
   return (
-    <div className="bg-black border border-emerald-700 rounded-lg p-3 focus-within:ring-2 focus-within:ring-emerald-600 focus-within:border-emerald-600 min-h-[100px]">
+    <div
+      className="bg-black border border-emerald-700 rounded-lg p-3 focus-within:ring-2 focus-within:ring-emerald-600 focus-within:border-emerald-600 min-h-[100px] cursor-text"
+      onClick={handleContainerClick}
+    >
       <div className="flex flex-wrap gap-2 mb-2">
         {tags.map((tag, idx) => (
           <span
@@ -891,7 +883,10 @@ function TagInput({
             {tag}
             <button
               type="button"
-              onClick={() => onRemove(idx)}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent container click from firing
+                onRemove(idx);
+              }}
               className="hover:text-emerald-300 transition-colors"
             >
               ×
@@ -900,6 +895,7 @@ function TagInput({
         ))}
       </div>
       <input
+        ref={inputRef}
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
