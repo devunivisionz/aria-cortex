@@ -18,7 +18,8 @@ interface CreateDNAModalProps {
   isOpen: boolean;
   mandateId: string;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (data?: any) => void;
+  onError?: (message: string) => void;
 }
 
 const STEPS = [
@@ -33,6 +34,7 @@ export default function CreateDNAModal({
   mandateId,
   onClose,
   onSuccess,
+  onError,
 }: CreateDNAModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] =
@@ -41,7 +43,7 @@ export default function CreateDNAModal({
   const [error, setError] = useState<string | null>(null);
 
   const { lookups, loading: lookupsLoading } = useLookups();
-  console.log(formData, "lookups");
+
   const updateFormData = (updates: Partial<DNASegmentFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
   };
@@ -56,6 +58,12 @@ export default function CreateDNAModal({
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const resetForm = () => {
+    setFormData(initialDNAFormData);
+    setCurrentStep(1);
+    setError(null);
   };
 
   const handleSubmit = async () => {
@@ -102,25 +110,29 @@ export default function CreateDNAModal({
 
       const data = await response.json();
 
-      if (!data.success)
+      if (!data.success) {
         throw new Error(data.message || "Failed to create DNA");
+      }
 
-      // Reset form
-      setFormData(initialDNAFormData);
-      setCurrentStep(1);
-      onSuccess();
-      alert(data.message); // Optional: show success
+      // Reset form and close modal
+      resetForm();
+      onClose();
+
+      // Trigger success callback (parent will show toast)
+      onSuccess(data);
     } catch (err: any) {
-      setError(err.message || "Failed to create DNA segment");
+      const errorMessage = err.message || "Failed to create DNA segment";
+      setError(errorMessage);
+
+      // Trigger error callback (parent will show toast)
+      onError?.(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   const handleClose = () => {
-    setFormData(initialDNAFormData);
-    setCurrentStep(1);
-    setError(null);
+    resetForm();
     onClose();
   };
 

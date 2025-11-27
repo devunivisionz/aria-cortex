@@ -16,7 +16,7 @@ import { formatDistanceToNow } from "date-fns";
 
 interface MandateCardProps {
   mandate: Mandate;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 const statusConfig: Record<
@@ -35,10 +35,14 @@ const statusConfig: Record<
 
 export default function MandateCard({ mandate, onClick }: MandateCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const status = statusConfig[mandate.status];
+
+  // Default to 'draft' if status is not provided
+  const status = statusConfig[mandate.status || "draft"];
 
   const formatEmployeeRange = () => {
-    const { size_employees_min, size_employees_max } = mandate.dna;
+    const size_employees_min = mandate.dna?.size_employees_min;
+    const size_employees_max = mandate.dna?.size_employees_max;
+
     if (size_employees_min && size_employees_max) {
       return `${size_employees_min}-${size_employees_max}`;
     } else if (size_employees_min) {
@@ -54,8 +58,15 @@ export default function MandateCard({ mandate, onClick }: MandateCardProps) {
       const names = mandate.creator.raw_user_meta_data.full_name.split(" ");
       return `${names[0]} ${names[names.length - 1]?.[0] || ""}.`;
     }
-    return mandate.creator?.email?.split("@")[0] || "Unknown";
+    if (mandate.creator?.email) {
+      return mandate.creator.email.split("@")[0];
+    }
+    return "Unknown";
   };
+
+  // Safe access to dna arrays with defaults
+  const geoAllow = mandate.dna?.geo_allow || [];
+  const industryAllow = mandate.dna?.industry_allow || [];
 
   return (
     <div
@@ -80,35 +91,39 @@ export default function MandateCard({ mandate, onClick }: MandateCardProps) {
       </div>
 
       {/* Description */}
-      {mandate.description && (
-        <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-          {mandate.description}
-        </p>
-      )}
+      <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+        {mandate.description || "No description provided"}
+      </p>
 
-      {/* Tags */}
+      {/* Tags - Only show if there's data */}
       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 mb-4">
-        {mandate.dna.geo_allow.length > 0 && (
+        {geoAllow.length > 0 ? (
           <div className="flex items-center gap-1.5">
             <Globe size={14} className="text-emerald-500" />
-            <span>{mandate.dna.geo_allow.slice(0, 3).join(", ")}</span>
-            {mandate.dna.geo_allow.length > 3 && (
-              <span className="text-gray-500">
-                +{mandate.dna.geo_allow.length - 3}
-              </span>
+            <span>{geoAllow.slice(0, 3).join(", ")}</span>
+            {geoAllow.length > 3 && (
+              <span className="text-gray-500">+{geoAllow.length - 3}</span>
             )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <Globe size={14} className="text-gray-500" />
+            <span className="text-gray-500">All regions</span>
           </div>
         )}
 
-        {mandate.dna.industry_allow.length > 0 && (
+        {industryAllow.length > 0 ? (
           <div className="flex items-center gap-1.5">
             <Building2 size={14} className="text-emerald-500" />
-            <span>{mandate.dna.industry_allow.slice(0, 2).join(", ")}</span>
-            {mandate.dna.industry_allow.length > 2 && (
-              <span className="text-gray-500">
-                +{mandate.dna.industry_allow.length - 2}
-              </span>
+            <span>{industryAllow.slice(0, 2).join(", ")}</span>
+            {industryAllow.length > 2 && (
+              <span className="text-gray-500">+{industryAllow.length - 2}</span>
             )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <Building2 size={14} className="text-gray-500" />
+            <span className="text-gray-500">All industries</span>
           </div>
         )}
 
@@ -123,13 +138,13 @@ export default function MandateCard({ mandate, onClick }: MandateCardProps) {
         <div>
           <span className="text-sm text-gray-500">DNA Segments</span>
           <p className="font-semibold text-white">
-            {mandate.dna_segments_count || 0}
+            {mandate.dna_segments_count ?? "--"}
           </p>
         </div>
         <div>
           <span className="text-sm text-gray-500">Leads</span>
           <p className="font-semibold text-white">
-            {mandate.leads_count > 0
+            {mandate.leads_count && mandate.leads_count > 0
               ? mandate.leads_count.toLocaleString()
               : "--"}
           </p>
@@ -137,7 +152,9 @@ export default function MandateCard({ mandate, onClick }: MandateCardProps) {
         <div>
           <span className="text-sm text-gray-500">Match Rate</span>
           <p className="font-semibold text-emerald-400">
-            {mandate.match_rate > 0 ? `${mandate.match_rate}%` : "--"}
+            {mandate.match_rate && mandate.match_rate > 0
+              ? `${mandate.match_rate}%`
+              : "--"}
           </p>
         </div>
       </div>

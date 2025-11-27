@@ -1,84 +1,62 @@
-// hooks/useMandates.ts
+// utils/useMandate.ts
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-// import { Mandate, MandateFilters } from "@/types/mandate";
 
-interface UseMandatesParams extends MandateFilters {
-  page: number;
-  pageSize: number;
-}
-
-export function useMandates({
-  search,
-  status,
-  sortBy,
-  sortOrder,
-  page,
-  pageSize,
-}: UseMandatesParams) {
-  const [mandates, setMandates] = useState<Mandate[]>([]);
+export const useMandates = ({
+  search = "",
+  status = "all",
+  sortBy = "created_at",
+  sortOrder = "desc",
+  page = 1,
+  pageSize = 10,
+}) => {
+  const [mandates, setMandates] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMandates = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // ✅ Send all filtering and pagination options to Edge Function
+      const { data, error: invokeError } = await supabase.functions.invoke(
+        "mandates",
+        {
+          body: {
+            search,
+            status,
+            sort_by: sortBy, // Use snake_case if backend expects that
+            sort_order: sortOrder,
+            page,
+            page_size: pageSize, // Consistent naming
+          },
+        }
+      );
+
+      if (invokeError) throw invokeError;
+
+      // ✅ Handle actual response format: { ok: true, data: [...], count: 9 }
+      if (data?.ok && Array.isArray(data.data)) {
+        setMandates(data.data); // list of mandates
+        setTotal(data.count || 0); // total count for pagination
+      } else {
+        throw new Error("Invalid data format returned");
+      }
+    } catch (err: any) {
+      console.error("Error fetching mandates:", err);
+      setError(err.message || "Failed to load mandates");
+      setMandates([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchMandates() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        let query = supabase.from("mandates").select(
-          `
-            *,
-            creator:created_by (
-              email,
-              raw_user_meta_data
-            ),
-            dna_segments_count:dna_segments(count)
-          `,
-          { count: "exact" }
-        );
-
-        // Apply filters
-        if (search) {
-          query = query.or(
-            `name.ilike.%${search}%,description.ilike.%${search}%`
-          );
-        }
-
-        if (status !== "all") {
-          query = query.eq("status", status);
-        }
-
-        // Apply sorting
-        query = query.order(sortBy, { ascending: sortOrder === "asc" });
-
-        // Apply pagination
-        const from = (page - 1) * pageSize;
-        const to = from + pageSize - 1;
-        query = query.range(from, to);
-
-        const { data, error: queryError, count } = await query;
-
-        if (queryError) throw queryError;
-
-        // Transform the count from array to number
-        const transformedData = data?.map((mandate) => ({
-          ...mandate,
-          dna_segments_count: mandate.dna_segments_count?.[0]?.count || 0,
-        }));
-
-        setMandates(transformedData || []);
-        setTotal(count || 0);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchMandates();
   }, [search, status, sortBy, sortOrder, page, pageSize]);
 
-  return { mandates, total, loading, error };
-}
+  return { mandates, total, loading, error, refetch: fetchMandates };
+};
