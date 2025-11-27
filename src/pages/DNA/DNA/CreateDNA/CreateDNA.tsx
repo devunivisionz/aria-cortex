@@ -77,7 +77,7 @@ export default function CreateDNAModal({
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
-            organization_id: formData.organization_id,
+            organization_id: formData.organization_id ?? formData.legal_names,
             name: formData.name,
             description: formData.description || null,
 
