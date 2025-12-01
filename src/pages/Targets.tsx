@@ -231,7 +231,7 @@ export default function Targets() {
 
       const mappedCompanies = (responseData.data || []).map((company: any) => ({
         id: company.id,
-        name: company.display_name || company.legal_name || "Unnamed Company",
+        name: company.name || company.legal_name || "Unnamed Company",
         domain: company.website,
         industry: company.industry,
         employees: company.employee_count,

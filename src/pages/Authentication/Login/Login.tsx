@@ -1,8 +1,9 @@
-import { useState } from "react";
+// pages/Auth/LoginPage.tsx
+import { useState, useEffect } from "react";
 import Input from "../../../components/AuthenticationComponents/InputFields";
 import Button from "../../../components/Button";
 import { Link, useNavigate } from "react-router-dom";
-// import { authService } from "../../../lib/supabaseClient";
+import { supabase } from "../../../lib/supabase";
 
 export function LoginPage({
   onSwitchToSignup,
@@ -16,17 +17,33 @@ export function LoginPage({
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
+  // Check for remembered email on component mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem("remembered_email");
+    if (rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   const handleSubmit = async (
     e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
-
-    // Reset error message
     setError("");
 
-    // Validation
+    // Enhanced validation
     if (!email.trim()) {
       setError("Please enter your email");
+      return;
+    }
+
+    if (!isValidEmail(email.trim())) {
+      setError("Please enter a valid email address");
       return;
     }
 
@@ -35,50 +52,42 @@ export function LoginPage({
       return;
     }
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Call Supabase Edge Function for login
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            email: email.trim(),
-            password: password,
-          }),
-        }
-      );
+      // Option 1: Use Supabase client directly (RECOMMENDED)
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
+        });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || "Failed to sign in");
+      if (signInError) {
+        throw signInError;
       }
 
-      // Success - store the session
       if (data.session) {
-        // Store the access token
+        console.log("Login successful:", data.user?.id);
+
+        // Store tokens as backup (Supabase already handles this)
         localStorage.setItem("access_token", data.session.access_token);
         localStorage.setItem("refresh_token", data.session.refresh_token);
 
-        // Store user data if needed
         if (data.user) {
           localStorage.setItem("user", JSON.stringify(data.user));
         }
 
-        // If remember me is checked, store email
         if (rememberMe) {
-          localStorage.setItem("remembered_email", email);
+          localStorage.setItem("remembered_email", email.trim());
         } else {
           localStorage.removeItem("remembered_email");
         }
 
-        // Set authentication flag
         localStorage.setItem("isAuthenticated", "true");
 
         // Navigate to dashboard
@@ -110,12 +119,131 @@ export function LoginPage({
     }
   };
 
+  // Alternative: If you still want to use Edge Function
+  const handleSubmitWithEdgeFunction = async (
+    e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+    setError("");
+
+    if (!email.trim()) {
+      setError("Please enter your email");
+      return;
+    }
+
+    if (!isValidEmail(email.trim())) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password");
+      return;
+    }
+
+    setIsLoading(true);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            password: password,
+          }),
+          signal: controller.signal,
+        }
+      );
+
+      clearTimeout(timeoutId);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || "Failed to sign in");
+      }
+
+      if (data.session) {
+        console.log("Login successful, setting session...");
+
+        // ✅ CRITICAL: Set the session in Supabase client
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+
+        if (sessionError) {
+          throw new Error("Failed to set session: " + sessionError.message);
+        }
+
+        // Store tokens in localStorage
+        localStorage.setItem("access_token", data.session.access_token);
+        localStorage.setItem("refresh_token", data.session.refresh_token);
+
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+
+        if (rememberMe) {
+          localStorage.setItem("remembered_email", email.trim());
+        } else {
+          localStorage.removeItem("remembered_email");
+        }
+
+        localStorage.setItem("isAuthenticated", "true");
+
+        console.log("Session set successfully, navigating...");
+        navigate("/");
+      }
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      console.error("Login error:", err);
+
+      if (err.name === "AbortError") {
+        setError("Request timeout. Please try again.");
+      } else if (
+        err.message.includes("Invalid login credentials") ||
+        err.message.includes("Invalid email or password")
+      ) {
+        setError("Invalid email or password. Please try again.");
+      } else if (err.message.includes("Email not confirmed")) {
+        setError("Please verify your email before signing in.");
+      } else if (err.message.includes("User not found")) {
+        setError("No account found with this email. Please sign up first.");
+      } else if (
+        err.message.includes("network") ||
+        err.message.includes("Failed to fetch")
+      ) {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError(err.message || "Failed to sign in. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setError("");
     setIsLoading(true);
 
     try {
-      // await authService.signInWithGoogle();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) throw error;
+
       // User will be redirected to Google OAuth
     } catch (err: any) {
       console.error("Google sign-in error:", err);
@@ -124,14 +252,12 @@ export function LoginPage({
     }
   };
 
-  // Check for remembered email on component mount
-  useState(() => {
-    const rememberedEmail = localStorage.getItem("remembered_email");
-    if (rememberedEmail) {
-      setEmail(rememberedEmail);
-      setRememberMe(true);
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e as any);
     }
-  });
+  };
 
   return (
     <div
@@ -267,6 +393,7 @@ export function LoginPage({
             placeholder="name@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onKeyPress={handleKeyPress}
             required
             disabled={isLoading}
           />
@@ -277,6 +404,7 @@ export function LoginPage({
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyPress={handleKeyPress}
             required
             disabled={isLoading}
           />

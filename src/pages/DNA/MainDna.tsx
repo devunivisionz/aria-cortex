@@ -1,6 +1,5 @@
 import { useState } from "react";
 import MandateListPage from "./Mandate/Mandate";
-import DnaPage from "./DNA/DnaPage"; // create your DNA page component
 import DNAList from "./DNA/DNAList";
 
 export default function MainDna() {

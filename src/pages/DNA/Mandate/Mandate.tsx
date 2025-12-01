@@ -1,5 +1,4 @@
-// pages/mandates/index.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMandates } from "../../../utils/useMandate";
 import MandateCard from "../../../components/MandateComponents/MandateCard";
 import MandateFilters from "../../../components/MandateComponents/MandateFilters";
@@ -8,6 +7,7 @@ import Toaster from "../../../components/Toaster/Toaster";
 import { Plus } from "lucide-react";
 import CreateMandateModal from "./CreateMandate/CreateMandate";
 import { format } from "date-fns";
+import { supabase } from "../../../lib/supabase";
 
 export default function MandateListPage() {
   const [filters, setFilters] = useState({
@@ -15,67 +15,80 @@ export default function MandateListPage() {
     sortBy: "created_at" as const,
     sortOrder: "desc" as const,
   });
+
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
+  // Fetch mandates via your existing hook
   const { mandates, total, loading, error, refetch } = useMandates({
     ...filters,
     page,
     pageSize,
   });
 
+  // ⭐ Call Supabase Edge Function
+  useEffect(() => {
+    const callEdgeFunction = async () => {
+      const payload = {
+        search: filters.search,
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder,
+        page,
+        pageSize,
+      };
+
+      const { data, error } = await supabase.functions.invoke("mandates", {
+        body: payload,
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        return;
+      }
+
+      console.log("Edge function response:", data);
+    };
+
+    callEdgeFunction();
+  }, [filters, page]);
+
   const [openModel, setOpenModel] = useState(false);
 
-  // Toast state
-  const [toast, setToast] = useState<{
-    show: boolean;
-    message: string;
-    variant: "success" | "error" | "info" | "warning";
-  }>({
+  const [toast, setToast] = useState({
     show: false,
     message: "",
-    variant: "success",
+    variant: "success" as const,
   });
 
-  // Handle successful mandate creation
-  const handleMandateSuccess = (mandate: any) => {
+  const handleMandateSuccess = () => {
     setToast({
       show: true,
       message: "Mandate created successfully!",
       variant: "success",
     });
-    // Refetch mandates to show the new one
-    if (refetch) {
-      refetch();
-    }
+    if (refetch) refetch();
   };
 
-  // Handle mandate creation error
-  const handleMandateError = (errorMessage: string) => {
+  const handleMandateError = (msg: string) => {
     setToast({
       show: true,
-      message: errorMessage || "Failed to create mandate",
+      message: msg || "Failed to create mandate",
       variant: "error",
     });
   };
 
-  // Close toast
-  const handleCloseToast = () => {
-    setToast((prev) => ({ ...prev, show: false }));
-  };
+  const handleCloseToast = () => setToast((prev) => ({ ...prev, show: false }));
 
-  // Format dates for display
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "MMM dd, yyyy HH:mm");
-    } catch (e) {
+    } catch {
       return "Invalid Date";
     }
   };
-  console.log(mandates, "mandates");
+
   return (
     <div className="min-h-screen bg-black">
-      {/* Toaster - rendered at parent level so it persists after modal closes */}
       <Toaster
         msg={toast.message}
         variant={toast.variant}
@@ -83,7 +96,6 @@ export default function MandateListPage() {
         onClose={handleCloseToast}
       />
 
-      {/* Create Mandate Modal */}
       <CreateMandateModal
         isOpen={openModel}
         onClose={() => setOpenModel(false)}

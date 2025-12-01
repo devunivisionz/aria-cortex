@@ -12,6 +12,7 @@ export default function SignupPage({
 }) {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState<string>("");
+  const [organizationName, setOrganizationName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
@@ -27,6 +28,11 @@ export default function SignupPage({
     // Validation
     if (!fullName.trim()) {
       setError("Please enter your full name");
+      return;
+    }
+
+    if (!organizationName.trim()) {
+      setError("Please enter your organization name");
       return;
     }
 
@@ -61,6 +67,7 @@ export default function SignupPage({
             email: email.trim(),
             password: password,
             fullName: fullName.trim(),
+            organizationName: organizationName.trim(),
           }),
         }
       );
@@ -82,6 +89,7 @@ export default function SignupPage({
 
         // Clear form fields
         setFullName("");
+        setOrganizationName("");
         setEmail("");
         setPassword("");
         setConfirmPassword("");
@@ -282,6 +290,16 @@ export default function SignupPage({
             placeholder="John Doe"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
+            required
+            disabled={isLoading}
+          />
+
+          <Input
+            label="Organization Name"
+            type="text"
+            placeholder="Acme Corporation"
+            value={organizationName}
+            onChange={(e) => setOrganizationName(e.target.value)}
             required
             disabled={isLoading}
           />
