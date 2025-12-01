@@ -8,6 +8,13 @@ import {
   AlertCircle,
   Loader2,
   Check,
+  Sparkles,
+  PenLine,
+  Wand2,
+  Send,
+  RotateCcw,
+  Copy,
+  CheckCircle2,
 } from "lucide-react";
 
 // DNA Segment from database - matches your actual structure
@@ -75,12 +82,30 @@ interface MandateRecord {
   embedding: number[] | null;
 }
 
+// AI Extraction Result
+interface AIExtractionResult {
+  name: string;
+  description: string;
+  geo_allow: string[];
+  geo_block: string[];
+  industry_allow: string[];
+  contact_roles: string[];
+  size_employees_min: number | null;
+  size_employees_max: number | null;
+  revenue_min: number | null;
+  revenue_max: number | null;
+  suggestedSegments: string[];
+  confidence: number;
+}
+
 interface CreateMandateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (mandate: MandateRecord) => void;
   onError?: (message: string) => void;
 }
+
+type InputMode = "manual" | "ai";
 
 const STEPS = [
   { id: 1, title: "Basic Info", icon: "📋" },
@@ -115,16 +140,32 @@ const DEFAULT_FORM: MandateForm = {
   dna: DEFAULT_DNA,
 };
 
+const AI_EXAMPLES = [
+  "I need B2B SaaS companies in DACH region with 50-500 employees, targeting CTOs and VP Engineering roles",
+  "Find luxury retail distributors in Switzerland and France, excluding fast fashion, minimum $10M revenue",
+  "Tech startups in Nordics focused on sustainability, Series A to C, looking for procurement managers",
+];
+
 export default function CreateMandateModal({
   isOpen,
   onClose,
   onSuccess,
   onError,
 }: CreateMandateModalProps) {
+  // Mode state
+  const [inputMode, setInputMode] = useState<InputMode>("manual");
+
+  // Form state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [form, setForm] = useState<MandateForm>(DEFAULT_FORM);
+
+  // AI state
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<AIExtractionResult | null>(null);
+  const [aiApplied, setAiApplied] = useState(false);
 
   // DNA Segments state
   const [dnaSegments, setDnaSegments] = useState<DNASegment[]>([]);
@@ -182,6 +223,176 @@ export default function CreateMandateModal({
     }
   };
 
+  // AI Processing function
+  const processWithAI = async () => {
+    if (!aiPrompt.trim()) return;
+
+    setAiLoading(true);
+    setError(null);
+    setAiResult(null);
+
+    try {
+      const session = await supabase.auth.getSession();
+      const accessToken = session.data.session?.access_token;
+
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_SUPABASE_URL
+        }/functions/v1/ai-generates-mandate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ prompt: aiPrompt }),
+        }
+      );
+
+      const data = await response.json();
+      console.log("Response:", data);
+
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+
+      setAiResult(data.data);
+    } catch (err) {
+      console.error("Error:", err);
+      setError(err instanceof Error ? err.message : "Failed to process");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // Helper functions for mock AI extraction
+  const extractMandateName = (prompt: string): string => {
+    const words = prompt.split(" ").slice(0, 5).join(" ");
+    return words.length > 40 ? words.substring(0, 40) + "..." : words;
+  };
+
+  const extractRegions = (prompt: string): string[] => {
+    const regions: string[] = [];
+    const regionKeywords: Record<string, string[]> = {
+      Switzerland: ["switzerland", "swiss", "ch"],
+      Germany: ["germany", "german", "dach"],
+      Austria: ["austria", "austrian", "dach"],
+      France: ["france", "french"],
+      "United Kingdom": ["uk", "united kingdom", "britain", "british"],
+      "United States": ["usa", "us", "united states", "america"],
+      Nordics: ["nordic", "nordics", "scandinavia"],
+      Sweden: ["sweden", "swedish"],
+      Norway: ["norway", "norwegian"],
+      Denmark: ["denmark", "danish"],
+      Finland: ["finland", "finnish"],
+    };
+
+    const lowerPrompt = prompt.toLowerCase();
+    Object.entries(regionKeywords).forEach(([region, keywords]) => {
+      if (keywords.some((kw) => lowerPrompt.includes(kw))) {
+        regions.push(region);
+      }
+    });
+
+    return regions;
+  };
+
+  const extractIndustries = (prompt: string): string[] => {
+    const industries: string[] = [];
+    const industryKeywords: Record<string, string[]> = {
+      SaaS: ["saas", "software as a service"],
+      Technology: ["tech", "technology"],
+      Retail: ["retail", "commerce", "ecommerce"],
+      Manufacturing: ["manufacturing", "factory"],
+      Healthcare: ["healthcare", "health", "medical"],
+      Finance: ["finance", "fintech", "banking"],
+      "Luxury Goods": ["luxury", "premium", "high-end"],
+    };
+
+    const lowerPrompt = prompt.toLowerCase();
+    Object.entries(industryKeywords).forEach(([industry, keywords]) => {
+      if (keywords.some((kw) => lowerPrompt.includes(kw))) {
+        industries.push(industry);
+      }
+    });
+
+    return industries;
+  };
+
+  const extractRoles = (prompt: string): string[] => {
+    const roles: string[] = [];
+    const roleKeywords: Record<string, string[]> = {
+      CTO: ["cto", "chief technology"],
+      CEO: ["ceo", "chief executive"],
+      "VP Engineering": ["vp engineering", "vp of engineering"],
+      "Procurement Manager": ["procurement", "purchasing"],
+      CFO: ["cfo", "chief financial"],
+      CMO: ["cmo", "chief marketing"],
+      COO: ["coo", "chief operating"],
+    };
+
+    const lowerPrompt = prompt.toLowerCase();
+    Object.entries(roleKeywords).forEach(([role, keywords]) => {
+      if (keywords.some((kw) => lowerPrompt.includes(kw))) {
+        roles.push(role);
+      }
+    });
+
+    return roles;
+  };
+
+  const extractEmployeeMin = (prompt: string): number | null => {
+    const match = prompt.match(/(\d+)\s*[-–to]+\s*\d+\s*employees/i);
+    if (match) return parseInt(match[1]);
+    const minMatch = prompt.match(/minimum\s*(\d+)\s*employees/i);
+    if (minMatch) return parseInt(minMatch[1]);
+    return null;
+  };
+
+  const extractEmployeeMax = (prompt: string): number | null => {
+    const match = prompt.match(/\d+\s*[-–to]+\s*(\d+)\s*employees/i);
+    if (match) return parseInt(match[1]);
+    const maxMatch = prompt.match(/maximum\s*(\d+)\s*employees/i);
+    if (maxMatch) return parseInt(maxMatch[1]);
+    return null;
+  };
+
+  const extractRevenueMin = (prompt: string): number | null => {
+    const match = prompt.match(/\$(\d+)([MmKk])/);
+    if (match) {
+      const value = parseInt(match[1]);
+      const multiplier = match[2].toLowerCase() === "m" ? 1000000 : 1000;
+      return value * multiplier;
+    }
+    return null;
+  };
+
+  // Apply AI results to form
+  const applyAIResult = () => {
+    if (!aiResult) return;
+
+    setForm({
+      name: aiResult.name,
+      description: aiResult.description,
+      dna: {
+        ...DEFAULT_DNA,
+        geo_allow: aiResult.geo_allow,
+        geo_block: aiResult.geo_block,
+        industry_allow: aiResult.industry_allow,
+        contact_roles: aiResult.contact_roles,
+        size_employees_min: aiResult.size_employees_min,
+        size_employees_max: aiResult.size_employees_max,
+        revenue_min: aiResult.revenue_min,
+        revenue_max: aiResult.revenue_max,
+      },
+    });
+
+    setAiApplied(true);
+    setInputMode("manual");
+    setCurrentStep(1);
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
@@ -205,19 +416,14 @@ export default function CreateMandateModal({
 
       if (insertError) throw insertError;
 
-      // Close modal and reset form first
       onClose();
       resetForm();
-
-      // Then trigger success callback (parent will show toast)
       onSuccess?.(data as MandateRecord);
     } catch (err) {
       console.error("Error creating mandate:", err);
       const errorMessage =
         err instanceof Error ? err.message : "Failed to create mandate";
       setError(errorMessage);
-
-      // Trigger error callback (parent will show toast)
       onError?.(errorMessage);
     } finally {
       setLoading(false);
@@ -325,6 +531,10 @@ export default function CreateMandateModal({
     setForm(DEFAULT_FORM);
     setError(null);
     setSearchQuery("");
+    setAiPrompt("");
+    setAiResult(null);
+    setAiApplied(false);
+    setInputMode("manual");
   };
 
   const handleClose = () => {
@@ -475,7 +685,7 @@ export default function CreateMandateModal({
       {/* Modal */}
       <div
         className="relative bg-black border border-emerald-700 rounded-xl shadow-2xl shadow-emerald-900/20 w-full max-w-2xl flex flex-col"
-        style={{ height: "680px", maxHeight: "90vh" }}
+        style={{ height: "720px", maxHeight: "90vh" }}
       >
         {/* Header - Fixed */}
         <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-emerald-700">
@@ -484,8 +694,14 @@ export default function CreateMandateModal({
               Create New Mandate
             </h2>
             <p className="text-sm text-gray-400 mt-1">
-              Step {currentStep} of {STEPS.length}:{" "}
-              {STEPS[currentStep - 1].title}
+              {inputMode === "manual" ? (
+                <>
+                  Step {currentStep} of {STEPS.length}:{" "}
+                  {STEPS[currentStep - 1].title}
+                </>
+              ) : (
+                "Describe your ideal customer profile"
+              )}
             </p>
           </div>
           <button
@@ -496,6 +712,37 @@ export default function CreateMandateModal({
           </button>
         </div>
 
+        {/* Mode Toggle */}
+        <div className="flex-shrink-0 px-6 py-3 border-b border-emerald-900/50">
+          <div className="flex gap-2 p-1 bg-gray-900 rounded-lg">
+            <button
+              onClick={() => setInputMode("manual")}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
+                inputMode === "manual"
+                  ? "bg-emerald-600 text-white shadow-lg"
+                  : "text-gray-400 hover:text-white hover:bg-gray-800"
+              }`}
+            >
+              <PenLine size={16} />
+              Manual Entry
+            </button>
+            <button
+              onClick={() => setInputMode("ai")}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
+                inputMode === "ai"
+                  ? "bg-gradient-to-r from-purple-600 to-emerald-600 text-white shadow-lg"
+                  : "text-gray-400 hover:text-white hover:bg-gray-800"
+              }`}
+            >
+              <Sparkles size={16} />
+              AI Assistant
+              <span className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded font-semibold">
+                NEW
+              </span>
+            </button>
+          </div>
+        </div>
+
         {/* Error Display */}
         {error && (
           <div className="flex-shrink-0 mx-6 mt-4 p-3 bg-red-900/30 border border-red-700 rounded-lg flex items-center gap-2 text-red-400">
@@ -504,288 +751,608 @@ export default function CreateMandateModal({
           </div>
         )}
 
-        {/* Progress Steps - Fixed */}
-        <div className="flex-shrink-0 px-6 py-4 border-b border-emerald-900/50">
-          <div className="flex items-center justify-center">
-            {STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <button
-                  onClick={() => setCurrentStep(step.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    currentStep === step.id
-                      ? "bg-emerald-900/50 text-emerald-400"
-                      : currentStep > step.id
-                      ? "text-emerald-500"
-                      : "text-gray-500"
-                  }`}
-                >
-                  <span className="text-lg">{step.icon}</span>
-                  <span className="text-sm font-medium">{step.title}</span>
-                </button>
-
-                {index < STEPS.length - 1 && (
-                  <div
-                    className={`w-12 h-0.5 mx-2 ${
-                      currentStep > step.id ? "bg-emerald-600" : "bg-gray-700"
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
+        {/* AI Applied Success Banner */}
+        {aiApplied && inputMode === "manual" && (
+          <div className="flex-shrink-0 mx-6 mt-4 p-3 bg-emerald-900/30 border border-emerald-700 rounded-lg flex items-center gap-2 text-emerald-400">
+            <CheckCircle2 size={18} />
+            <span className="text-sm">
+              AI suggestions applied! Review and adjust the form below.
+            </span>
+            <button
+              onClick={() => setAiApplied(false)}
+              className="ml-auto text-xs text-gray-400 hover:text-white"
+            >
+              Dismiss
+            </button>
           </div>
-        </div>
+        )}
 
-        {/* Content - Scrollable with fixed height */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0">
-          <div className="h-full">
-            {/* Step 1: Basic Information */}
-            {currentStep === 1 && (
+        {/* Content Area */}
+        {inputMode === "ai" ? (
+          /* ==================== AI MODE ==================== */
+          <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0">
+            <div className="h-full flex flex-col">
+              {/* AI Input Section */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Mandate Name <span className="text-red-400">*</span>
+                    Describe your ideal customer profile
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full bg-black border border-emerald-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 outline-none"
-                    placeholder="Swiss Distributors - Luxury Goods"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Required. Give your mandate a descriptive name.
+                  <div className="relative">
+                    <textarea
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder="E.g., I'm looking for B2B SaaS companies in the DACH region with 50-500 employees, targeting CTOs and VP Engineering roles..."
+                      className="w-full h-40 bg-black border border-emerald-700 rounded-xl px-4 py-4 text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none"
+                      disabled={aiLoading}
+                    />
+                    {/* Gradient border effect when focused */}
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600/20 to-emerald-600/20 pointer-events-none opacity-0 focus-within:opacity-100 transition-opacity" />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Include details like geography, industry, company size,
+                    roles, and any exclusions.
                   </p>
                 </div>
 
+                {/* Example Prompts */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={form.description}
-                    onChange={(e) =>
-                      setForm({ ...form, description: e.target.value })
-                    }
-                    className="w-full bg-black border border-emerald-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 outline-none resize-none"
-                    rows={6}
-                    placeholder="Describe the target profile and objectives..."
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Optional. Describe your ideal customer profile.
-                  </p>
+                  <p className="text-xs text-gray-500 mb-2">Try an example:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {AI_EXAMPLES.map((example, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setAiPrompt(example)}
+                        className="px-3 py-1.5 text-xs bg-gray-800 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white transition-colors truncate max-w-[200px]"
+                        disabled={aiLoading}
+                      >
+                        {example.substring(0, 40)}...
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Generate Button */}
+                <button
+                  onClick={processWithAI}
+                  disabled={aiLoading || !aiPrompt.trim()}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-emerald-600 text-white rounded-xl font-medium hover:from-purple-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-900/30"
+                >
+                  {aiLoading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Analyzing your requirements...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 size={18} />
+                      Generate Mandate with AI
+                    </>
+                  )}
+                </button>
               </div>
-            )}
 
-            {/* Step 2: Geographic Targeting */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Allowed Regions
-                  </label>
-                  <p className="text-xs text-gray-500 mb-2">
-                    Press Enter to add a region
+              {/* AI Loading Animation */}
+              {aiLoading && (
+                <div className="mt-8 flex-1 flex flex-col items-center justify-center">
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-purple-900/30 rounded-full animate-pulse" />
+                    <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-purple-500 rounded-full animate-spin" />
+                    <Sparkles
+                      size={24}
+                      className="absolute inset-0 m-auto text-purple-400"
+                    />
+                  </div>
+                  <p className="mt-4 text-gray-400 text-sm">
+                    Extracting customer profile details...
                   </p>
-                  <TagInput
-                    tags={form.dna.geo_allow}
-                    onAdd={(val) => addToArray("geo_allow", val)}
-                    onRemove={(idx) => removeFromArray("geo_allow", idx)}
-                    placeholder="Add country or region..."
-                  />
+                  <div className="mt-2 flex gap-1">
+                    <span
+                      className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
+                      style={{ animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <span
+                      className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
+                      style={{ animationDelay: "300ms" }}
+                    />
+                  </div>
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Blocked Regions
-                  </label>
-                  <p className="text-xs text-gray-500 mb-2">
-                    Press Enter to add a region to block
-                  </p>
-                  <TagInput
-                    tags={form.dna.geo_block}
-                    onAdd={(val) => addToArray("geo_block", val)}
-                    onRemove={(idx) => removeFromArray("geo_block", idx)}
-                    placeholder="Add country or region to block..."
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: DNA Segments */}
-            {currentStep === 3 && (
-              <div className="space-y-4">
-                {/* Search */}
-                <div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search segments by name, industry, or role..."
-                    className="w-full bg-black border border-emerald-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 outline-none"
-                  />
-                </div>
-
-                {/* Selected Count */}
-                {form.dna.segments.length > 0 && (
-                  <div className="flex items-center gap-2 p-3 bg-emerald-900/20 border border-emerald-800 rounded-lg">
-                    <Check size={16} className="text-emerald-400" />
-                    <span className="text-sm text-emerald-400">
-                      {form.dna.segments.length} segment
-                      {form.dna.segments.length !== 1 ? "s" : ""} selected
-                    </span>
+              {/* AI Results Preview */}
+              {aiResult && !aiLoading && (
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={18} className="text-emerald-400" />
+                      <span className="text-sm font-medium text-white">
+                        AI Extraction Complete
+                      </span>
+                      <span className="px-2 py-0.5 text-xs bg-emerald-900/50 text-emerald-400 rounded-full">
+                        {Math.round(aiResult.confidence * 100)}% confidence
+                      </span>
+                    </div>
                     <button
-                      type="button"
-                      onClick={() =>
-                        setForm((prev) => ({
-                          ...prev,
-                          dna: { ...prev.dna, segments: [] },
-                        }))
-                      }
-                      className="ml-auto text-xs text-gray-400 hover:text-white"
+                      onClick={() => {
+                        setAiResult(null);
+                        setAiPrompt("");
+                      }}
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors"
                     >
-                      Clear all
+                      <RotateCcw size={12} />
+                      Start over
                     </button>
+                  </div>
+
+                  {/* Results Grid */}
+                  <div className="bg-gray-900 border border-gray-700 rounded-xl p-4 space-y-4">
+                    {/* Name */}
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Mandate Name</p>
+                      <p className="text-white font-medium">{aiResult.name}</p>
+                    </div>
+
+                    {/* Extracted Details */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Regions */}
+                      {aiResult.geo_allow.length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">
+                            Regions ({aiResult.geo_allow.length})
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {aiResult.geo_allow.map((region, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 text-xs bg-emerald-900/50 text-emerald-400 rounded"
+                              >
+                                {region}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Industries */}
+                      {aiResult.industry_allow.length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">
+                            Industries ({aiResult.industry_allow.length})
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {aiResult.industry_allow.map((industry, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 text-xs bg-blue-900/50 text-blue-400 rounded"
+                              >
+                                {industry}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Roles */}
+                      {aiResult.contact_roles.length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">
+                            Target Roles ({aiResult.contact_roles.length})
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {aiResult.contact_roles.map((role, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-0.5 text-xs bg-purple-900/50 text-purple-400 rounded"
+                              >
+                                {role}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Company Size */}
+                      {(aiResult.size_employees_min !== null ||
+                        aiResult.size_employees_max !== null) && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">
+                            Company Size
+                          </p>
+                          <p className="text-sm text-white">
+                            {aiResult.size_employees_min ?? 0} -{" "}
+                            {aiResult.size_employees_max ?? "∞"} employees
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Revenue */}
+                      {aiResult.revenue_min !== null && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">
+                            Minimum Revenue
+                          </p>
+                          <p className="text-sm text-white">
+                            {formatCurrency(aiResult.revenue_min)}+
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Apply Button */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={applyAIResult}
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-colors"
+                    >
+                      <Check size={18} />
+                      Apply & Continue to Form
+                    </button>
+                    <button
+                      onClick={() => setInputMode("manual")}
+                      className="px-4 py-3 text-gray-400 hover:text-white border border-gray-600 rounded-xl hover:border-gray-500 transition-colors"
+                    >
+                      Edit Manually
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* ==================== MANUAL MODE ==================== */
+          <>
+            {/* Progress Steps - Fixed (Manual mode only) */}
+            <div className="flex-shrink-0 px-6 py-4 border-b border-emerald-900/50">
+              <div className="flex items-center justify-center">
+                {STEPS.map((step, index) => (
+                  <div key={step.id} className="flex items-center">
+                    <button
+                      onClick={() => setCurrentStep(step.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                        currentStep === step.id
+                          ? "bg-emerald-900/50 text-emerald-400"
+                          : currentStep > step.id
+                          ? "text-emerald-500"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      <span className="text-lg">{step.icon}</span>
+                      <span className="text-sm font-medium">{step.title}</span>
+                    </button>
+
+                    {index < STEPS.length - 1 && (
+                      <div
+                        className={`w-12 h-0.5 mx-2 ${
+                          currentStep > step.id
+                            ? "bg-emerald-600"
+                            : "bg-gray-700"
+                        }`}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Content - Scrollable with fixed height */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0">
+              <div className="h-full">
+                {/* Step 1: Basic Information */}
+                {currentStep === 1 && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Mandate Name <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={form.name}
+                        onChange={(e) =>
+                          setForm({ ...form, name: e.target.value })
+                        }
+                        className="w-full bg-black border border-emerald-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 outline-none"
+                        placeholder="Swiss Distributors - Luxury Goods"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Required. Give your mandate a descriptive name.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        value={form.description}
+                        onChange={(e) =>
+                          setForm({ ...form, description: e.target.value })
+                        }
+                        className="w-full bg-black border border-emerald-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 outline-none resize-none"
+                        rows={6}
+                        placeholder="Describe the target profile and objectives..."
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Optional. Describe your ideal customer profile.
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {/* Segments List */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-3">
-                    Available DNA Segments
-                    <span className="text-gray-500 font-normal ml-2">
-                      ({filteredSegments.length})
-                    </span>
-                  </label>
-
-                  {segmentsLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2
-                        size={24}
-                        className="text-emerald-500 animate-spin"
+                {/* Step 2: Geographic Targeting */}
+                {currentStep === 2 && (
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Allowed Regions
+                      </label>
+                      <p className="text-xs text-gray-500 mb-2">
+                        Press Enter to add a region
+                      </p>
+                      <TagInput
+                        tags={form.dna.geo_allow}
+                        onAdd={(val) => addToArray("geo_allow", val)}
+                        onRemove={(idx) => removeFromArray("geo_allow", idx)}
+                        placeholder="Add country or region..."
                       />
-                      <span className="ml-2 text-gray-400">
-                        Loading segments...
-                      </span>
                     </div>
-                  ) : segmentsError ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-red-400">
-                      <AlertCircle size={24} />
-                      <span className="mt-2">{segmentsError}</span>
-                      <button
-                        onClick={fetchDNASegments}
-                        className="mt-2 text-sm text-emerald-400 hover:underline"
-                      >
-                        Retry
-                      </button>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Blocked Regions
+                      </label>
+                      <p className="text-xs text-gray-500 mb-2">
+                        Press Enter to add a region to block
+                      </p>
+                      <TagInput
+                        tags={form.dna.geo_block}
+                        onAdd={(val) => addToArray("geo_block", val)}
+                        onRemove={(idx) => removeFromArray("geo_block", idx)}
+                        placeholder="Add country or region to block..."
+                      />
                     </div>
-                  ) : filteredSegments.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      {searchQuery ? (
-                        <>
-                          <p>No segments match "{searchQuery}"</p>
+                  </div>
+                )}
+
+                {/* Step 3: DNA Segments */}
+                {currentStep === 3 && (
+                  <div className="space-y-4">
+                    {/* Search */}
+                    <div>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search segments by name, industry, or role..."
+                        className="w-full bg-black border border-emerald-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 outline-none"
+                      />
+                    </div>
+
+                    {/* Selected Count */}
+                    {form.dna.segments.length > 0 && (
+                      <div className="flex items-center gap-2 p-3 bg-emerald-900/20 border border-emerald-800 rounded-lg">
+                        <Check size={16} className="text-emerald-400" />
+                        <span className="text-sm text-emerald-400">
+                          {form.dna.segments.length} segment
+                          {form.dna.segments.length !== 1 ? "s" : ""} selected
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              dna: { ...prev.dna, segments: [] },
+                            }))
+                          }
+                          className="ml-auto text-xs text-gray-400 hover:text-white"
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Segments List */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-3">
+                        Available DNA Segments
+                        <span className="text-gray-500 font-normal ml-2">
+                          ({filteredSegments.length})
+                        </span>
+                      </label>
+
+                      {segmentsLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                          <Loader2
+                            size={24}
+                            className="text-emerald-500 animate-spin"
+                          />
+                          <span className="ml-2 text-gray-400">
+                            Loading segments...
+                          </span>
+                        </div>
+                      ) : segmentsError ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-red-400">
+                          <AlertCircle size={24} />
+                          <span className="mt-2">{segmentsError}</span>
                           <button
-                            onClick={() => setSearchQuery("")}
+                            onClick={fetchDNASegments}
                             className="mt-2 text-sm text-emerald-400 hover:underline"
                           >
-                            Clear search
+                            Retry
                           </button>
-                        </>
+                        </div>
+                      ) : filteredSegments.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                          {searchQuery ? (
+                            <>
+                              <p>No segments match "{searchQuery}"</p>
+                              <button
+                                onClick={() => setSearchQuery("")}
+                                className="mt-2 text-sm text-emerald-400 hover:underline"
+                              >
+                                Clear search
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <p>No DNA segments available.</p>
+                              <p className="text-sm mt-1">
+                                Create segments in the DNA Segments section.
+                              </p>
+                            </>
+                          )}
+                        </div>
                       ) : (
-                        <>
-                          <p>No DNA segments available.</p>
-                          <p className="text-sm mt-1">
-                            Create segments in the DNA Segments section.
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-2 max-h-[320px] overflow-y-auto pr-2">
-                      {filteredSegments.map((segment) => {
-                        const isSelected = form.dna.segments.includes(
-                          segment.id
-                        );
-                        const previewItems = getSegmentPreview(segment);
+                        <div className="space-y-2 max-h-[280px] overflow-y-auto pr-2">
+                          {filteredSegments.map((segment) => {
+                            const isSelected = form.dna.segments.includes(
+                              segment.id
+                            );
+                            const previewItems = getSegmentPreview(segment);
 
-                        return (
-                          <label
-                            key={segment.id}
-                            className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
-                              isSelected
-                                ? "bg-emerald-900/30 border-emerald-600"
-                                : "bg-gray-900 border-gray-700 hover:border-emerald-700"
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleSegment(segment.id)}
-                              className="w-4 h-4 mt-0.5 rounded border-gray-600 bg-black text-emerald-600 focus:ring-emerald-600 focus:ring-offset-black flex-shrink-0"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-white font-medium">
-                                  {segment.name}
-                                </span>
-                                {isSelected && (
-                                  <Check
-                                    size={14}
-                                    className="text-emerald-400"
-                                  />
-                                )}
-                              </div>
-
-                              {segment.description && (
-                                <p className="text-sm text-gray-400 mt-1 line-clamp-2">
-                                  {segment.description}
-                                </p>
-                              )}
-
-                              {/* Config Preview */}
-                              {previewItems.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                  {previewItems.slice(0, 4).map((item, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="px-2 py-0.5 text-xs bg-gray-800 text-gray-400 rounded"
-                                    >
-                                      {item.label}: {item.value}
+                            return (
+                              <label
+                                key={segment.id}
+                                className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
+                                  isSelected
+                                    ? "bg-emerald-900/30 border-emerald-600"
+                                    : "bg-gray-900 border-gray-700 hover:border-emerald-700"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleSegment(segment.id)}
+                                  className="w-4 h-4 mt-0.5 rounded border-gray-600 bg-black text-emerald-600 focus:ring-emerald-600 focus:ring-offset-black flex-shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-white font-medium">
+                                      {segment.name}
                                     </span>
-                                  ))}
-                                  {previewItems.length > 4 && (
-                                    <span className="px-2 py-0.5 text-xs bg-gray-800 text-gray-500 rounded">
-                                      +{previewItems.length - 4} more
-                                    </span>
+                                    {isSelected && (
+                                      <Check
+                                        size={14}
+                                        className="text-emerald-400"
+                                      />
+                                    )}
+                                  </div>
+
+                                  {segment.description && (
+                                    <p className="text-sm text-gray-400 mt-1 line-clamp-2">
+                                      {segment.description}
+                                    </p>
+                                  )}
+
+                                  {/* Config Preview */}
+                                  {previewItems.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                      {previewItems
+                                        .slice(0, 4)
+                                        .map((item, idx) => (
+                                          <span
+                                            key={idx}
+                                            className="px-2 py-0.5 text-xs bg-gray-800 text-gray-400 rounded"
+                                          >
+                                            {item.label}: {item.value}
+                                          </span>
+                                        ))}
+                                      {previewItems.length > 4 && (
+                                        <span className="px-2 py-0.5 text-xs bg-gray-800 text-gray-500 rounded">
+                                          +{previewItems.length - 4} more
+                                        </span>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
-                              )}
-                            </div>
-                          </label>
-                        );
-                      })}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Footer - Fixed */}
-        <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-t border-emerald-700 bg-gray-900/50">
-          <button
-            type="button"
-            onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
-            disabled={currentStep === 1}
-            className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronLeft size={20} />
-            Back
-          </button>
+            {/* Footer - Fixed (Manual mode only) */}
+            <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-t border-emerald-700 bg-gray-900/50">
+              <button
+                type="button"
+                onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
+                disabled={currentStep === 1}
+                className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={20} />
+                Back
+              </button>
 
-          <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="px-4 py-2 text-gray-300 hover:text-white border border-gray-600 rounded-lg hover:border-gray-500 transition-colors"
+                >
+                  Cancel
+                </button>
+
+                {currentStep < STEPS.length ? (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep((prev) => prev + 1)}
+                    disabled={!canProceed()}
+                    className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                    <ChevronRight size={20} />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={loading || !canProceed()}
+                    className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        Create Mandate
+                        {form.dna.segments.length > 0 && (
+                          <span className="ml-1 px-1.5 py-0.5 text-xs bg-white/20 rounded">
+                            {form.dna.segments.length}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* AI Mode Footer */}
+        {inputMode === "ai" && !aiResult && !aiLoading && (
+          <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-t border-emerald-700 bg-gray-900/50">
+            <button
+              type="button"
+              onClick={() => setInputMode("manual")}
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <PenLine size={16} />
+              Switch to manual entry
+            </button>
+
             <button
               type="button"
               onClick={handleClose}
@@ -793,43 +1360,8 @@ export default function CreateMandateModal({
             >
               Cancel
             </button>
-
-            {currentStep < STEPS.length ? (
-              <button
-                type="button"
-                onClick={() => setCurrentStep((prev) => prev + 1)}
-                disabled={!canProceed()}
-                className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Next
-                <ChevronRight size={20} />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={loading || !canProceed()}
-                className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    Create Mandate
-                    {form.dna.segments.length > 0 && (
-                      <span className="ml-1 px-1.5 py-0.5 text-xs bg-white/20 rounded">
-                        {form.dna.segments.length}
-                      </span>
-                    )}
-                  </>
-                )}
-              </button>
-            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -858,13 +1390,11 @@ function TagInput({
         setInput("");
       }
     }
-    // Optional: Remove last tag with backspace when input is empty
     if (e.key === "Backspace" && !input && tags.length > 0) {
       onRemove(tags.length - 1);
     }
   };
 
-  // Focus input when clicking anywhere in the container
   const handleContainerClick = () => {
     inputRef.current?.focus();
   };
@@ -884,7 +1414,7 @@ function TagInput({
             <button
               type="button"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent container click from firing
+                e.stopPropagation();
                 onRemove(idx);
               }}
               className="hover:text-emerald-300 transition-colors"
