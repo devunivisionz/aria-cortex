@@ -12,6 +12,16 @@ const corsHeaders = {
   apiKey: Deno.env.get("SUPABASE_ANON_KEY"),
 };
 
+// SVI Calculation Function
+function calculateSVI({ press_60d = 0, rfp_60d = 0 }) {
+  const PRESS_WEIGHT = 0.4;
+  const RFP_WEIGHT = 0.6;
+
+  const svi = press_60d * PRESS_WEIGHT + rfp_60d * RFP_WEIGHT;
+
+  return Number(svi.toFixed(2));
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -22,13 +32,12 @@ serve(async (req) => {
   }
 
   try {
-    // Create Supabase client with SERVICE ROLE KEY (bypasses RLS)
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Optional: Get authenticated user if auth header is provided
+    // Optional: Get authenticated user
     const authHeader = req.headers.get("Authorization");
     let user = null;
 
@@ -43,18 +52,14 @@ serve(async (req) => {
           user = authUser;
         }
       } catch (authErr) {
-        console.log("Auth check failed, continuing as anonymous:", authErr);
+        console.log("Auth check failed:", authErr);
       }
     }
 
-    // Only allow GET requests for this endpoint
     if (req.method !== "GET") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -67,7 +72,16 @@ serve(async (req) => {
     const ownership = url.searchParams.get("ownership");
     const search = url.searchParams.get("search");
 
-    // Build query
+    console.log("Fetching companies:", {
+      limit,
+      offset,
+      country,
+      industry,
+      ownership,
+      search,
+    });
+
+    // Build query - select ALL columns including signal columns
     let query = supabaseClient
       .from("companies")
       .select("*", { count: "exact" })
@@ -78,7 +92,7 @@ serve(async (req) => {
     if (industry) query = query.eq("industry", industry);
     if (ownership) query = query.eq("ownership_type", ownership);
 
-    // Add search filter across multiple fields
+    // Add search filter
     if (search) {
       const searchTerm = search.trim();
       query = query.or(
@@ -94,14 +108,70 @@ serve(async (req) => {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error("Supabase query error:", error);
+      console.error("Query error:", error);
       throw error;
     }
 
-    // Return successful response
+    console.log(`Fetched ${data?.length || 0} companies`);
+
+    // Process each company: calculate SVI and update if needed
+    const companiesWithSVI = await Promise.all(
+      (data || []).map(async (company) => {
+        // Get signal data from company row itself
+        const press_60d = company.press_60d || 0;
+        const rfp_60d = company.rfp_60d || 0;
+        const job_90d = company.job_90d || 0; // if you want to use this later
+
+        // Calculate SVI
+        const calculatedSVI = calculateSVI({ press_60d, rfp_60d });
+
+        // Check if we need to update
+        const storedSVI = company.svi_score || 0;
+        const needsUpdate = Math.abs(storedSVI - calculatedSVI) > 0.01; // small tolerance for float comparison
+
+        // Update the company record if SVI changed
+        if (needsUpdate) {
+          const { error: updateError } = await supabaseClient
+            .from("companies")
+            .update({
+              svi_score: calculatedSVI,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", company.id);
+
+          if (updateError) {
+            console.error(
+              `Failed to update SVI for ${company.id}:`,
+              updateError
+            );
+          } else {
+            console.log(
+              `✓ Updated ${company.display_name}: SVI ${storedSVI} → ${calculatedSVI}`
+            );
+          }
+        }
+
+        // Return company with fresh SVI
+        return {
+          ...company,
+          svi_score: calculatedSVI,
+          svi_details: {
+            press_60d,
+            rfp_60d,
+            job_90d,
+            calculated_at: new Date().toISOString(),
+          },
+        };
+      })
+    );
+
+    console.log(`Processed ${companiesWithSVI.length} companies`);
+
+    // Return response
     return new Response(
       JSON.stringify({
-        data: data || [],
+        success: true,
+        data: companiesWithSVI,
         count: count || 0,
         limit,
         offset,
@@ -116,12 +186,12 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error fetching companies:", error);
+    console.error("Error:", error);
 
     return new Response(
       JSON.stringify({
-        error:
-          error instanceof Error ? error.message : "An unknown error occurred",
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
         data: [],
         count: 0,
       }),
