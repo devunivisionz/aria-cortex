@@ -22,7 +22,12 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
+  TrendingUp,
+  Newspaper,
+  FileText,
 } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import Toaster from "../components/Toaster/Toaster"; // Adjust path as needed
 
 interface Company {
   id: string | number;
@@ -38,6 +43,19 @@ interface Company {
   linkedin_url?: string;
   city?: string;
   country?: string;
+  svi_score?: number;
+  svi_details?: {
+    press_60d: number;
+    rfp_60d: number;
+    job_90d: number;
+    calculated_at: string;
+  };
+}
+
+interface ToastState {
+  show: boolean;
+  message: string;
+  variant: "success" | "error" | "info";
 }
 
 export default function Targets() {
@@ -45,6 +63,16 @@ export default function Targets() {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Toast state
+  const [toast, setToast] = useState<ToastState>({
+    show: false,
+    message: "",
+    variant: "info",
+  });
+
+  // Favorite loading state
+  const [favoriteLoading, setFavoriteLoading] = useState<string | null>(null);
 
   // Separate input value from search value
   const [inputValue, setInputValue] = useState("");
@@ -66,6 +94,18 @@ export default function Targets() {
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Toast handlers
+  const showToast = (
+    message: string,
+    variant: "success" | "error" | "info"
+  ) => {
+    setToast({ show: true, message, variant });
+  };
+
+  const handleCloseToast = () => {
+    setToast({ ...toast, show: false });
+  };
+
   // Debounce the input value
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -74,7 +114,7 @@ export default function Targets() {
 
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearch(inputValue);
-      setCurrentPage(1); // Reset to first page on search
+      setCurrentPage(1);
     }, 500);
 
     return () => {
@@ -242,11 +282,13 @@ export default function Targets() {
         city: company.city,
         country: company.country,
         source: "Database",
+        svi_score: company.svi_score,
+        svi_details: company.svi_details,
       }));
 
       setCompanies(mappedCompanies);
       setTotalCount(responseData.count || mappedCompanies.length);
-      setCurrentPage(1); // Reset to first page
+      setCurrentPage(1);
 
       if (mappedCompanies.length === 0) {
         setError("No companies found matching your criteria.");
@@ -259,10 +301,62 @@ export default function Targets() {
           ? err.message
           : "Failed to fetch companies from database"
       );
+      showToast(
+        err instanceof Error ? err.message : "Failed to fetch companies",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
   }, [countryFilter, industryFilter, debouncedSearch]);
+
+  // Add to favorites handler
+  const handleAddFavorite = async (
+    companyId: string | number,
+    companyName: string
+  ) => {
+    setFavoriteLoading(companyId.toString());
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        showToast("Please log in to favorite companies", "error");
+        return;
+      }
+
+      const response = await fetch(
+        "https://zhmalcapsmcvvhyrcicm.supabase.co/functions/v1/add-favorite",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+            apiKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ company_id: companyId }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        showToast(
+          result.message || `${companyName} added to favorites!`,
+          "success"
+        );
+      } else {
+        showToast(result.error || "Failed to add favorite", "error");
+      }
+    } catch (error) {
+      console.error("Error adding favorite:", error);
+      showToast("Failed to add favorite. Please try again.", "error");
+    } finally {
+      setFavoriteLoading(null);
+    }
+  };
 
   // Trigger fetch when debounced search or filters change
   useEffect(() => {
@@ -285,6 +379,22 @@ export default function Targets() {
       }
     };
   }, []);
+
+  const getSVIColorClass = (svi: number) => {
+    if (svi >= 8) return "bg-red-500/20 border-red-500 text-red-300";
+    if (svi >= 5) return "bg-orange-500/20 border-orange-500 text-orange-300";
+    if (svi >= 3) return "bg-yellow-500/20 border-yellow-500 text-yellow-300";
+    if (svi >= 1) return "bg-blue-500/20 border-blue-500 text-blue-300";
+    return "bg-slate-500/20 border-slate-500 text-slate-300";
+  };
+
+  const getSVILabel = (svi: number) => {
+    if (svi >= 8) return "🔥 Red Hot";
+    if (svi >= 5) return "🟠 Warm";
+    if (svi >= 3) return "🟡 Moderate";
+    if (svi >= 1) return "🟢 Cool";
+    return "❄️ Cold";
+  };
 
   const activeFilterCount = useMemo(
     () =>
@@ -341,6 +451,14 @@ export default function Targets() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Toaster */}
+      <Toaster
+        msg={toast.message}
+        variant={toast.variant}
+        show={toast.show}
+        onClose={handleCloseToast}
+      />
+
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-4 border border-slate-700">
@@ -673,6 +791,7 @@ export default function Targets() {
             </div>
           </div>
         )}
+
         {paginatedCompanies.map((company) => (
           <div
             key={company.id}
@@ -684,19 +803,34 @@ export default function Targets() {
                   <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
                     {company.name}
                   </h3>
+
+                  {/* Source Badge */}
                   {company.source && (
                     <span className="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-bold rounded-full border border-blue-500/30">
                       {company.source}
                     </span>
                   )}
+
+                  {/* SVI Score Badge */}
+                  {company.svi_score !== undefined &&
+                    company.svi_score !== null && (
+                      <div className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-full">
+                        <TrendingUp className="w-3.5 h-3.5 text-orange-400" />
+                        <span className="text-xs font-bold text-orange-300">
+                          SVI: {company.svi_score.toFixed(1)}
+                        </span>
+                      </div>
+                    )}
                 </div>
 
+                {/* Description */}
                 {company.description && (
                   <p className="text-sm text-slate-300 mb-3 line-clamp-2">
                     {company.description}
                   </p>
                 )}
 
+                {/* Company Details Row 1 */}
                 <div className="flex flex-wrap gap-3 mb-3">
                   {company.industry && (
                     <span className="inline-flex items-center gap-1 text-sm text-slate-200 bg-slate-700/50 px-3 py-1 rounded-lg border border-slate-600">
@@ -724,6 +858,45 @@ export default function Targets() {
                   )}
                 </div>
 
+                {/* Signal Metrics Row (if svi_details exists) */}
+                {company.svi_details && (
+                  <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-slate-700/50">
+                    <span className="text-xs text-slate-400 font-semibold">
+                      Signals:
+                    </span>
+
+                    {company.svi_details.press_60d > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs text-slate-300 bg-slate-700/30 px-2 py-0.5 rounded border border-slate-600/50">
+                        <Newspaper className="w-3 h-3 text-blue-400" />
+                        {company.svi_details.press_60d} press
+                      </span>
+                    )}
+
+                    {company.svi_details.rfp_60d > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs text-slate-300 bg-slate-700/30 px-2 py-0.5 rounded border border-slate-600/50">
+                        <FileText className="w-3 h-3 text-emerald-400" />
+                        {company.svi_details.rfp_60d} RFPs
+                      </span>
+                    )}
+
+                    {company.svi_details.job_90d > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs text-slate-300 bg-slate-700/30 px-2 py-0.5 rounded border border-slate-600/50">
+                        <Briefcase className="w-3 h-3 text-purple-400" />
+                        {company.svi_details.job_90d} jobs
+                      </span>
+                    )}
+
+                    {!company.svi_details.press_60d &&
+                      !company.svi_details.rfp_60d &&
+                      !company.svi_details.job_90d && (
+                        <span className="text-xs text-slate-500 italic">
+                          No recent signals
+                        </span>
+                      )}
+                  </div>
+                )}
+
+                {/* Links */}
                 <div className="flex gap-4 items-center">
                   {company.domain && (
                     <a
@@ -755,12 +928,49 @@ export default function Targets() {
                 </div>
               </div>
 
+              {/* Right Side Actions */}
               <div className="flex flex-col gap-2 ml-4">
-                <button className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-yellow-950 rounded-lg font-semibold hover:from-yellow-400 hover:to-amber-400 transition-all flex items-center gap-2 shadow-lg whitespace-nowrap">
-                  <Star size={16} />
-                  Favorite
+                {/* SVI Score Display (larger version) */}
+                {company.svi_score !== undefined &&
+                  company.svi_score !== null && (
+                    <div className="mb-2 text-center">
+                      <div
+                        className={`px-4 py-2 rounded-lg border-2 ${getSVIColorClass(
+                          company.svi_score
+                        )} backdrop-blur-sm`}
+                      >
+                        <div className="text-xs font-semibold opacity-80 mb-1">
+                          Momentum
+                        </div>
+                        <div className="text-2xl font-bold">
+                          {company.svi_score.toFixed(1)}
+                        </div>
+                        <div className="text-xs opacity-70 mt-1">
+                          {getSVILabel(company.svi_score)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                <button
+                  onClick={() => handleAddFavorite(company.id, company.name)}
+                  disabled={favoriteLoading === company.id.toString()}
+                  className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-yellow-950 rounded-lg font-semibold hover:from-yellow-400 hover:to-amber-400 transition-all flex items-center justify-center gap-2 shadow-lg whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {favoriteLoading === company.id.toString() ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Star size={16} />
+                      Favorite
+                    </>
+                  )}
                 </button>
-                <button className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-semibold hover:from-emerald-500 hover:to-teal-500 transition-all flex items-center gap-2 shadow-lg whitespace-nowrap">
+
+                <button className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-semibold hover:from-emerald-500 hover:to-teal-500 transition-all flex items-center justify-center gap-2 shadow-lg whitespace-nowrap">
                   <Sparkles size={16} />
                   Match
                 </button>
