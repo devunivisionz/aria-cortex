@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import Toaster from "../components/Toaster/Toaster"; // Adjust path as needed
+import CompanyDetailsModal from "../components/Targets/CompanyDetailModel";
 
 interface Company {
   id: string | number;
@@ -437,7 +438,14 @@ export default function Targets() {
     },
     [inputValue]
   );
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
+  // Add click handler
+  const handleCompanyClick = (company: any) => {
+    setSelectedCompany(company);
+    setModalOpen(true);
+  };
   if (loading && companies.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
@@ -458,7 +466,11 @@ export default function Targets() {
         show={toast.show}
         onClose={handleCloseToast}
       />
-
+      <CompanyDetailsModal
+        company={selectedCompany}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />{" "}
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-4 border border-slate-700">
@@ -510,7 +522,6 @@ export default function Targets() {
           </div>
         </div>
       </div>
-
       {/* Search and Filter Controls */}
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-6 border border-slate-700">
         {/* Search Bar */}
@@ -733,7 +744,6 @@ export default function Targets() {
           </div>
         )}
       </div>
-
       {/* Error Message */}
       {error && (
         <div className="bg-gradient-to-r from-red-900/50 to-orange-900/50 border-2 border-red-700 rounded-xl p-4 flex items-center gap-3">
@@ -743,7 +753,6 @@ export default function Targets() {
           <p className="text-red-200 font-medium">{error}</p>
         </div>
       )}
-
       {/* Results Info Bar */}
       {filteredCompanies.length > 0 && (
         <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-4 border border-slate-700 flex items-center justify-between">
@@ -778,7 +787,6 @@ export default function Targets() {
           </div>
         </div>
       )}
-
       {/* Results */}
       <div className="space-y-3">
         {loading && companies.length > 0 && (
@@ -794,6 +802,7 @@ export default function Targets() {
 
         {paginatedCompanies.map((company) => (
           <div
+            onClick={() => handleCompanyClick(company)}
             key={company.id}
             className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shadow-2xl hover:shadow-blue-500/10 transition-all p-6 border-l-4 border-blue-500 group hover:border-blue-400"
           >
@@ -999,7 +1008,6 @@ export default function Targets() {
           </div>
         )}
       </div>
-
       {/* Pagination */}
       {filteredCompanies.length > 0 && totalPages > 1 && (
         <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-6 border border-slate-700">
