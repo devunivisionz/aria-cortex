@@ -804,18 +804,41 @@ export default function Targets() {
           <div
             onClick={() => handleCompanyClick(company)}
             key={company.id}
-            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shadow-2xl hover:shadow-blue-500/10 transition-all p-6 border-l-4 border-blue-500 group hover:border-blue-400"
+            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shadow-lg 
+               hover:shadow-2xl hover:shadow-blue-500/20 
+               transition-all duration-300 ease-out
+               p-6 border-l-4 border-blue-500 
+               group hover:border-blue-400
+               cursor-pointer
+               hover:scale-[1.02] hover:-translate-y-1
+               hover:bg-gradient-to-br hover:from-slate-800/90 hover:to-slate-800
+               relative overflow-hidden"
           >
-            <div className="flex items-start justify-between">
+            {/* Hover Glow Effect */}
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-purple-500/0 
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+            />
+
+            {/* Top Border Glow on Hover */}
+            <div
+              className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent 
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            />
+
+            <div className="flex items-start justify-between relative z-10">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
+                  <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors duration-300">
                     {company.name}
                   </h3>
 
                   {/* Source Badge */}
                   {company.source && (
-                    <span className="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-bold rounded-full border border-blue-500/30">
+                    <span
+                      className="px-3 py-1 bg-blue-500/20 text-blue-300 text-xs font-bold rounded-full border border-blue-500/30
+                           group-hover:bg-blue-500/30 group-hover:border-blue-400/50 transition-all duration-300"
+                    >
                       {company.source}
                     </span>
                   )}
@@ -823,8 +846,13 @@ export default function Targets() {
                   {/* SVI Score Badge */}
                   {company.svi_score !== undefined &&
                     company.svi_score !== null && (
-                      <div className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-full">
-                        <TrendingUp className="w-3.5 h-3.5 text-orange-400" />
+                      <div
+                        className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-orange-500/20 to-red-500/20 
+                            border border-orange-500/30 rounded-full
+                            group-hover:from-orange-500/30 group-hover:to-red-500/30 
+                            group-hover:border-orange-400/50 transition-all duration-300"
+                      >
+                        <TrendingUp className="w-3.5 h-3.5 text-orange-400 group-hover:scale-110 transition-transform duration-300" />
                         <span className="text-xs font-bold text-orange-300">
                           SVI: {company.svi_score.toFixed(1)}
                         </span>
@@ -834,7 +862,7 @@ export default function Targets() {
 
                 {/* Description */}
                 {company.description && (
-                  <p className="text-sm text-slate-300 mb-3 line-clamp-2">
+                  <p className="text-sm text-slate-300 mb-3 line-clamp-2 group-hover:text-slate-200 transition-colors duration-300">
                     {company.description}
                   </p>
                 )}
@@ -842,26 +870,38 @@ export default function Targets() {
                 {/* Company Details Row 1 */}
                 <div className="flex flex-wrap gap-3 mb-3">
                   {company.industry && (
-                    <span className="inline-flex items-center gap-1 text-sm text-slate-200 bg-slate-700/50 px-3 py-1 rounded-lg border border-slate-600">
-                      <Briefcase className="w-4 h-4 text-blue-400" />
+                    <span
+                      className="inline-flex items-center gap-1 text-sm text-slate-200 bg-slate-700/50 px-3 py-1 rounded-lg border border-slate-600
+                           group-hover:bg-slate-600/50 group-hover:border-slate-500 group-hover:text-white transition-all duration-300"
+                    >
+                      <Briefcase className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform duration-300" />
                       {company.industry}
                     </span>
                   )}
                   {company.location && (
-                    <span className="inline-flex items-center gap-1 text-sm text-slate-200 bg-slate-700/50 px-3 py-1 rounded-lg border border-slate-600">
-                      <MapPin className="w-4 h-4 text-emerald-400" />
+                    <span
+                      className="inline-flex items-center gap-1 text-sm text-slate-200 bg-slate-700/50 px-3 py-1 rounded-lg border border-slate-600
+                           group-hover:bg-slate-600/50 group-hover:border-slate-500 group-hover:text-white transition-all duration-300"
+                    >
+                      <MapPin className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
                       {company.location}
                     </span>
                   )}
                   {company.employees && (
-                    <span className="inline-flex items-center gap-1 text-sm text-slate-200 bg-slate-700/50 px-3 py-1 rounded-lg border border-slate-600">
-                      <Users className="w-4 h-4 text-purple-400" />
+                    <span
+                      className="inline-flex items-center gap-1 text-sm text-slate-200 bg-slate-700/50 px-3 py-1 rounded-lg border border-slate-600
+                           group-hover:bg-slate-600/50 group-hover:border-slate-500 group-hover:text-white transition-all duration-300"
+                    >
+                      <Users className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform duration-300" />
                       {company.employees} employees
                     </span>
                   )}
                   {company.founded_year && (
-                    <span className="inline-flex items-center gap-1 text-sm text-slate-200 bg-slate-700/50 px-3 py-1 rounded-lg border border-slate-600">
-                      <Calendar className="w-4 h-4 text-orange-400" />
+                    <span
+                      className="inline-flex items-center gap-1 text-sm text-slate-200 bg-slate-700/50 px-3 py-1 rounded-lg border border-slate-600
+                           group-hover:bg-slate-600/50 group-hover:border-slate-500 group-hover:text-white transition-all duration-300"
+                    >
+                      <Calendar className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform duration-300" />
                       Founded {company.founded_year}
                     </span>
                   )}
@@ -869,27 +909,36 @@ export default function Targets() {
 
                 {/* Signal Metrics Row (if svi_details exists) */}
                 {company.svi_details && (
-                  <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-slate-700/50">
-                    <span className="text-xs text-slate-400 font-semibold">
+                  <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-slate-700/50 group-hover:border-slate-600/50 transition-colors duration-300">
+                    <span className="text-xs text-slate-400 font-semibold group-hover:text-slate-300 transition-colors duration-300">
                       Signals:
                     </span>
 
                     {company.svi_details.press_60d > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-300 bg-slate-700/30 px-2 py-0.5 rounded border border-slate-600/50">
+                      <span
+                        className="inline-flex items-center gap-1 text-xs text-slate-300 bg-slate-700/30 px-2 py-0.5 rounded border border-slate-600/50
+                             group-hover:bg-slate-600/40 group-hover:border-slate-500/50 group-hover:text-white transition-all duration-300"
+                      >
                         <Newspaper className="w-3 h-3 text-blue-400" />
                         {company.svi_details.press_60d} press
                       </span>
                     )}
 
                     {company.svi_details.rfp_60d > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-300 bg-slate-700/30 px-2 py-0.5 rounded border border-slate-600/50">
+                      <span
+                        className="inline-flex items-center gap-1 text-xs text-slate-300 bg-slate-700/30 px-2 py-0.5 rounded border border-slate-600/50
+                             group-hover:bg-slate-600/40 group-hover:border-slate-500/50 group-hover:text-white transition-all duration-300"
+                      >
                         <FileText className="w-3 h-3 text-emerald-400" />
                         {company.svi_details.rfp_60d} RFPs
                       </span>
                     )}
 
                     {company.svi_details.job_90d > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-300 bg-slate-700/30 px-2 py-0.5 rounded border border-slate-600/50">
+                      <span
+                        className="inline-flex items-center gap-1 text-xs text-slate-300 bg-slate-700/30 px-2 py-0.5 rounded border border-slate-600/50
+                             group-hover:bg-slate-600/40 group-hover:border-slate-500/50 group-hover:text-white transition-all duration-300"
+                      >
                         <Briefcase className="w-3 h-3 text-purple-400" />
                         {company.svi_details.job_90d} jobs
                       </span>
@@ -916,7 +965,9 @@ export default function Targets() {
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-sm text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 transition-colors
+                       group-hover:text-blue-300"
                     >
                       <Globe className="w-3 h-3" />
                       {company.domain.replace(/^https?:\/\//, "")}
@@ -928,7 +979,9 @@ export default function Targets() {
                       href={company.linkedin_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-sm text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 transition-colors
+                       group-hover:text-blue-300"
                     >
                       LinkedIn
                       <ExternalLink className="w-3 h-3" />
@@ -946,7 +999,8 @@ export default function Targets() {
                       <div
                         className={`px-4 py-2 rounded-lg border-2 ${getSVIColorClass(
                           company.svi_score
-                        )} backdrop-blur-sm`}
+                        )} backdrop-blur-sm
+                         group-hover:scale-105 transition-transform duration-300`}
                       >
                         <div className="text-xs font-semibold opacity-80 mb-1">
                           Momentum
@@ -962,9 +1016,18 @@ export default function Targets() {
                   )}
 
                 <button
-                  onClick={() => handleAddFavorite(company.id, company.name)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddFavorite(company.id, company.name);
+                  }}
                   disabled={favoriteLoading === company.id.toString()}
-                  className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-yellow-950 rounded-lg font-semibold hover:from-yellow-400 hover:to-amber-400 transition-all flex items-center justify-center gap-2 shadow-lg whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 text-yellow-950 rounded-lg font-semibold 
+                   hover:from-yellow-400 hover:to-amber-400 
+                   hover:scale-105 hover:shadow-lg hover:shadow-yellow-500/25
+                   active:scale-95
+                   transition-all duration-200 
+                   flex items-center justify-center gap-2 shadow-lg whitespace-nowrap 
+                   disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {favoriteLoading === company.id.toString() ? (
                     <>
@@ -973,18 +1036,32 @@ export default function Targets() {
                     </>
                   ) : (
                     <>
-                      <Star size={16} />
+                      <Star size={16} className="group-hover:animate-pulse" />
                       Favorite
                     </>
                   )}
                 </button>
 
-                <button className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-semibold hover:from-emerald-500 hover:to-teal-500 transition-all flex items-center justify-center gap-2 shadow-lg whitespace-nowrap">
-                  <Sparkles size={16} />
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-semibold 
+                   hover:from-emerald-500 hover:to-teal-500 
+                   hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/25
+                   active:scale-95
+                   transition-all duration-200 
+                   flex items-center justify-center gap-2 shadow-lg whitespace-nowrap"
+                >
+                  <Sparkles size={16} className="group-hover:animate-pulse" />
                   Match
                 </button>
               </div>
             </div>
+
+            {/* Bottom Accent Line */}
+            <div
+              className="absolute bottom-0 left-4 right-4 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 
+                  transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"
+            />
           </div>
         ))}
 

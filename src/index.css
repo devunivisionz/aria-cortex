@@ -61,3 +61,21 @@
     @apply bg-white/5 backdrop-blur-md border border-white/5;
   }
 }
+
+/* In your global CSS */
+@layer utilities {
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 5px theme("colors.blue.500/20"),
+        0 0 10px theme("colors.blue.500/10");
+    }
+    to {
+      box-shadow: 0 0 10px theme("colors.blue.500/30"),
+        0 0 20px theme("colors.blue.500/20");
+    }
+  }
+}
