@@ -14,7 +14,8 @@ const corsHeaders = {
 // YOUR ML API URL
 // For local testing: Use ngrok or your local IP
 // For production: Deploy Flask API to Railway/Render/Heroku
-const ML_API_URL = Deno.env.get("ML_API_URL") || "http://localhost:5000";
+const ML_API_URL =
+  Deno.env.get("ML_API_URL") || "https://web-production-5f098.up.railway.app";
 
 serve(async (req) => {
   // Handle CORS
