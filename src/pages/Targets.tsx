@@ -29,6 +29,7 @@ import {
 import { supabase } from "../lib/supabase";
 import Toaster from "../components/Toaster/Toaster"; // Adjust path as needed
 import CompanyDetailsModal from "../components/Targets/CompanyDetailModel";
+import FavoriteCollectionsModal from "./Targets/FavoriteModel";
 
 interface Company {
   id: string | number;
@@ -82,7 +83,20 @@ export default function Targets() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-
+  // Add these with your other state declarations
+  const [showFavoriteModal, setShowFavoriteModal] = useState(false);
+  const [selectedCompanyForFavorite, setSelectedCompanyForFavorite] = useState<{
+    id: string | number;
+    name: string;
+  } | null>(null);
+  // Update this function to open the modal instead
+  const handleAddFavorite = async (
+    companyId: string | number,
+    companyName: string
+  ) => {
+    setSelectedCompanyForFavorite({ id: companyId, name: companyName });
+    setShowFavoriteModal(true);
+  };
   // Filter states
   const [industryFilter, setIndustryFilter] = useState<string>("");
   const [employeeCountFilter, setEmployeeCountFilter] = useState<string>("");
@@ -312,52 +326,52 @@ export default function Targets() {
   }, [countryFilter, industryFilter, debouncedSearch]);
 
   // Add to favorites handler
-  const handleAddFavorite = async (
-    companyId: string | number,
-    companyName: string
-  ) => {
-    setFavoriteLoading(companyId.toString());
+  // const handleAddFavorite = async (
+  //   companyId: string | number,
+  //   companyName: string
+  // ) => {
+  //   setFavoriteLoading(companyId.toString());
 
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+  //   try {
+  //     const {
+  //       data: { session },
+  //     } = await supabase.auth.getSession();
 
-      if (!session) {
-        showToast("Please log in to favorite companies", "error");
-        return;
-      }
+  //     if (!session) {
+  //       showToast("Please log in to favorite companies", "error");
+  //       return;
+  //     }
 
-      const response = await fetch(
-        "https://zhmalcapsmcvvhyrcicm.supabase.co/functions/v1/add-favorite",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-            apiKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
-          body: JSON.stringify({ company_id: companyId }),
-        }
-      );
+  //     const response = await fetch(
+  //       "https://zhmalcapsmcvvhyrcicm.supabase.co/functions/v1/add-favorite",
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${session.access_token}`,
+  //           apiKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  //         },
+  //         body: JSON.stringify({ company_id: companyId }),
+  //       }
+  //     );
 
-      const result = await response.json();
+  //     const result = await response.json();
 
-      if (result.success) {
-        showToast(
-          result.message || `${companyName} added to favorites!`,
-          "success"
-        );
-      } else {
-        showToast(result.error || "Failed to add favorite", "error");
-      }
-    } catch (error) {
-      console.error("Error adding favorite:", error);
-      showToast("Failed to add favorite. Please try again.", "error");
-    } finally {
-      setFavoriteLoading(null);
-    }
-  };
+  //     if (result.success) {
+  //       showToast(
+  //         result.message || `${companyName} added to favorites!`,
+  //         "success"
+  //       );
+  //     } else {
+  //       showToast(result.error || "Failed to add favorite", "error");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error adding favorite:", error);
+  //     showToast("Failed to add favorite. Please try again.", "error");
+  //   } finally {
+  //     setFavoriteLoading(null);
+  //   }
+  // };
 
   // Trigger fetch when debounced search or filters change
   useEffect(() => {
@@ -460,6 +474,17 @@ export default function Targets() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Toaster */}
+      <FavoriteCollectionsModal
+        isOpen={showFavoriteModal}
+        onClose={() => {
+          setShowFavoriteModal(false);
+          setSelectedCompanyForFavorite(null);
+        }}
+        companyId={selectedCompanyForFavorite?.id || ""}
+        companyName={selectedCompanyForFavorite?.name || ""}
+        onSuccess={(message) => showToast(message, "success")}
+        onError={(message) => showToast(message, "error")}
+      />
       <Toaster
         msg={toast.message}
         variant={toast.variant}
